@@ -5,7 +5,9 @@ import { expect } from "chai";
 
 import { compile } from "./compiler";
 
-const mocha = new Mocha();
+const mocha = new Mocha({
+	"timeout": "1m"
+});
 
 const tests = fs.readdirSync(path.join(__dirname, "input"));
 

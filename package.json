@@ -1,0 +1,34 @@
+{
+  "name": "pyscript",
+  "version": "1.0.0",
+  "description": "Your scientists were so preoccupied with whether they could, they didn't stop to think if they should.",
+  "scripts": {
+    "test": "npm run start",
+    "start": "ts-node index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cireneirbo/PyScript.git"
+  },
+  "author": "Brian Jenkins",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cireneirbo/PyScript/issues"
+  },
+  "homepage": "https://github.com/cireneirbo/PyScript#readme",
+  "dependencies": {
+    "ts-morph": "latest",
+    "typescript": "latest"
+  },
+  "devDependencies": {
+    "@types/chai": "latest",
+    "@types/mocha": "latest",
+    "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "chai": "latest",
+    "eslint": "latest",
+    "mocha": "latest",
+    "ts-node": "latest"
+  }
+}

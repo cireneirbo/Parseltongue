@@ -12,6 +12,11 @@ const project = new Project({
 });
 
 export function compile(input) {
+	// Normalize whitespace
+	input = input.replace(/^\t+/gm, function(match) {
+		return " ".repeat(match.length * 4);
+	}).replace(/[ \t]+$/gm, "");
+
 	const sourceFile = project.createSourceFile("input.ts", input);
 
 	for (const transform of fs.readdirSync(path.join(__dirname, "transforms"))) {

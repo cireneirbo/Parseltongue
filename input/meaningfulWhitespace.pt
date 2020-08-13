@@ -1,22 +1,24 @@
 const condition = true;
 
-if (condition) {
+if (condition):
     console.log();
-}
-
-while (condition) {
     console.log();
-}
 
-for (const element of []) {
+while (condition):
     console.log();
-}
+    console.log();
 
-switch (condition) {
+for (const element of []):
+    console.log()
+    console.log()
+
+switch (condition):
     case true:
-        console.log();
+        console.log()
+        console.log()
     case false:
-        console.log();
+        console.log()
+        console.log()
     default:
-        console.log();
-}
+        console.log()
+        console.log()

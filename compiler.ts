@@ -7,7 +7,10 @@ import { Project } from "ts-morph";
 //  npx ts-node ./compiler.ts input/twoPlusTwo.ps
 
 export function compile(input) {
-	const project = new Project();
+	const project = new Project({
+		"addFilesFromTsConfig": false,
+		"tsConfigFilePath": path.join(__dirname, "tsconfig.json")
+	});
 
 	const sourceFile = project.createSourceFile("input.ts", input);
 

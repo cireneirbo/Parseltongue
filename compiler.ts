@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as path from "path";
 
 import { Project } from "ts-morph";
 
@@ -8,13 +9,15 @@ import { Project } from "ts-morph";
 export function compile(input) {
 	const project = new Project();
 
-	project.createSourceFile("input.ts", input);
+	const sourceFile = project.createSourceFile("input.ts", input);
 
-	return project.emitToMemory({
-		"customTransformers": {
-			"before": []
-		}
-	}).getFiles()[0].text;
+	const transforms = fs.readdirSync(path.join(__dirname, "transforms"));
+
+	for (const transform of transforms) {
+		require(path.join(__dirname, "transforms", transform))["default"](sourceFile);
+	}
+
+	return project.emitToMemory().getFiles()[0].text;
 }
 
 if (require.main === module) {

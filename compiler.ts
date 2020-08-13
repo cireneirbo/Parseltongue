@@ -6,17 +6,15 @@ import { Project } from "ts-morph";
 // Example usage:
 //  npx ts-node ./compiler.ts input/twoPlusTwo.ps
 
-export function compile(input) {
-	const project = new Project({
-		"addFilesFromTsConfig": false,
-		"tsConfigFilePath": path.join(__dirname, "tsconfig.json")
-	});
+const project = new Project({
+	"addFilesFromTsConfig": false,
+	"tsConfigFilePath": path.join(__dirname, "tsconfig.json")
+});
 
+export function compile(input) {
 	const sourceFile = project.createSourceFile("input.ts", input);
 
-	const transforms = fs.readdirSync(path.join(__dirname, "transforms"));
-
-	for (const transform of transforms) {
+	for (const transform of fs.readdirSync(path.join(__dirname, "transforms"))) {
 		const transformFunction = require(path.join(__dirname, "transforms", transform))["default"];
 
 		if (transformFunction.name !== "skip") {
@@ -24,7 +22,11 @@ export function compile(input) {
 		}
 	}
 
-	return project.emitToMemory().getFiles()[0].text;
+	const output = project.emitToMemory().getFiles()[0].text;
+
+	project.removeSourceFile(sourceFile);
+
+	return output;
 }
 
 if (require.main === module) {

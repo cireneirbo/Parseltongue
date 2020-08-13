@@ -7,7 +7,7 @@ import { compile } from "../compiler";
 describe(path.basename(__filename), function() {
 
 	it("Compiling a file with incorrect indentation should result in an error.", function() {
-		const input = fs.readFileSync(path.join(__dirname, "..", "input", "meaningfulWhitespace.ps"), { "encoding": "utf8" }).replace(/^\s+/g, "");
+		const input = fs.readFileSync(path.join(__dirname, "..", "input", "meaningfulWhitespace.pt"), { "encoding": "utf8" }).replace(/^\s+/mg, "");
 
 		should.throw(function() {
 			compile(input);

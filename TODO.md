@@ -1,5 +1,5 @@
-# PyScript
-## Task to accomplish
+# TODO
+
 1. optional parenthesis around conditionals []
 2. indent-based block scope []
 3. line-end colon to indicate new block instead of curly brackets (if, while) []

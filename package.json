@@ -4,7 +4,8 @@
   "description": "Your scientists were so preoccupied with whether they could, they didn't stop to think if they should.",
   "scripts": {
     "test": "npm run start",
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "build": "rollup --config --watch"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,7 @@
     "typescript": "latest"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "latest",
     "@types/chai": "latest",
     "@types/mocha": "latest",
     "@types/node": "latest",
@@ -29,6 +31,8 @@
     "chai": "latest",
     "eslint": "latest",
     "mocha": "latest",
-    "ts-node": "latest"
+    "rollup": "latest",
+    "ts-node": "latest",
+    "tslib": "latest"
   }
 }

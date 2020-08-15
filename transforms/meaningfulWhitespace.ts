@@ -1,7 +1,7 @@
 import { SourceFile, SyntaxKind } from "ts-morph";
 
 function getIndentationWidth(text) {
-	return (/^ {2,}/m.exec(text) || [""])[0].length; //.split(/(\S+)/, 2);
+	return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
 
 export default function(sourceFile: SourceFile) {

@@ -18,7 +18,7 @@ for (const test of fs.readdirSync(path.join(__dirname, "input"))) {
 
 	suite.addTest(new Test("The compiled input should match the expected output.", function() {
 		const input = fs.readFileSync(path.join(__dirname, "input", test), { "encoding": "utf8" });
-		const expectedOutput = "\"use strict\";\n" + fs.readFileSync(path.join(__dirname, "expectedOutput", test), { "encoding": "utf8" }).replace(/\n{2,}/g, "\n");
+		const expectedOutput = "\"use strict\";\n" + fs.readFileSync(path.join(__dirname, "expectedOutput", test), { "encoding": "utf8" }).replace(/\r/g, "").replace(/\n{2,}/g, "\n");
 
 		should.strictEqual(compile(input), expectedOutput);
 	}));

@@ -26,7 +26,7 @@ export default function(sourceFile: SourceFile) {
 				for (let nextSibling = node; nextSibling !== undefined;) {
 					nextSibling = nextSibling.getNextSibling();
 
-					for (const line of nextSibling.getFullText().split("\n")) {
+					for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
 						if (line === "") {
 							continue;
 						}

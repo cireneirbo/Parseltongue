@@ -1,0 +1,5 @@
+const condition = true
+
+if condition and condition:
+    console.log()
+    console.log()

@@ -1,0 +1,4 @@
+for (const element of []) {
+    console.log();
+    console.log();
+}

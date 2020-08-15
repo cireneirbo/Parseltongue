@@ -15,6 +15,15 @@ export default function(sourceFile: SourceFile) {
 			case SyntaxKind.WhileStatement:
 				const statements = [];
 
+				if (node.getText().endsWith(" and") || node.getText().endsWith(" or")) {
+					const newNodeText = node.getFullText().trim() + node.getNextSibling().getFullText();
+
+					node.replaceWithText(newNodeText.replace(/ and /g, " && ").replace(/ or /g, " || "));
+
+					// @ts-ignore
+					node.getNextSibling().remove();
+				}
+
 				const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(node.getText()).slice(1);
 
 				statements.push(" ".repeat(4) + firstStatement.trim());
@@ -23,9 +32,7 @@ export default function(sourceFile: SourceFile) {
 
 				const nodesToRemove = [];
 
-				for (let nextSibling = node; nextSibling !== undefined;) {
-					nextSibling = nextSibling.getNextSibling();
-
+				for (let nextSibling = node.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling()) {
 					for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
 						if (line === "") {
 							continue;

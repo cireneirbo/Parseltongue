@@ -1,0 +1,5 @@
+const condition = true
+
+while condition and condition:
+    console.log()
+    console.log()

@@ -1,42 +1,56 @@
 import { SourceFile, SyntaxKind } from "ts-morph";
 
+function getIndentationWidth(text) {
+	return (/^ {2,}/m.exec(text) || [""])[0].length; //.split(/(\S+)/, 2);
+}
+
 export default function(sourceFile: SourceFile) {
-	sourceFile.forEachDescendant(function recurse(node) {
+	sourceFile.forEachDescendant(function(node) {
 		switch (node.getKind()) {
-			case SyntaxKind.LabeledStatement:
-			default:
-		}
-	});
+			case SyntaxKind.DoStatement:
+			case SyntaxKind.ForInStatement:
+			case SyntaxKind.ForOfStatement:
+			case SyntaxKind.ForStatement:
+			case SyntaxKind.IfStatement:
+			case SyntaxKind.WhileStatement:
+				const statements = [];
 
-	sourceFile.forEachDescendant(function recurse(node) {
-		switch (node.getKind()) {
-			case SyntaxKind.Block:
-			case SyntaxKind.CaseBlock:
-				const data = node.getText().slice(1, -1);
+				const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(node.getText()).slice(1);
 
-				let indentationLevel = 0;
+				statements.push(" ".repeat(4) + firstStatement.trim());
 
-				const indentationWidth = (data.match(/^ {2,}/m) || [""])[0].length;
+				const indentationWidth = getIndentationWidth(firstStatement);
 
-				// eslint-disable-next-line @typescript-eslint/prefer-for-of
-				for (let x = 0; x < data.length; x++) {
-					const [indentation, firstToken] = (data[x].match(/^\s{2,}?\S+/) || [""])[0].split(/(\S+)/, 2);
-					const lastToken = data[x].split(/(\S+)$/, 2).pop();
+				const nodesToRemove = [];
 
-					if (data[x] !== "" || indentationLevel === indentation.length / indentationWidth) {
-						if (indentation.length === ((indentationLevel + 1) * indentationWidth)) {
-							indentationLevel += 1;
-						} else if (indentation.length === ((indentationLevel - 1) * indentationWidth)) {
-							indentationLevel -= 1;
-						} else if (indentation.length === ((indentationLevel - 2) * indentationWidth)) {
-							// Big jump, but not unreasonable
-							indentationLevel = indentation.length / indentationWidth;
-						} else if (indentation.length !== ((indentationLevel) * indentationWidth)
-							&& indentation.length % indentationWidth === 0) {
-							throw new Error("IndentationError!");
+				for (let nextSibling = node; nextSibling !== undefined;) {
+					nextSibling = nextSibling.getNextSibling();
+
+					for (const line of nextSibling.getFullText().split("\n")) {
+						if (line === "") {
+							continue;
+						}
+
+						if (getIndentationWidth(line) === indentationWidth) {
+							statements.push(" ".repeat(4) + nextSibling.getText().trim());
+
+							nodesToRemove.push(nextSibling);
+						} else {
+							nextSibling = undefined;
+
+							break;
 						}
 					}
 				}
+
+				for (const node of nodesToRemove) {
+					node.remove();
+				}
+
+				node.replaceWithText(identifier + " (" + condition + ") {\n" + statements.join("\n") + "\n}\n");
+				break;
+			case SyntaxKind.SwitchStatement:
+				const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);
 			default:
 		}
 	});

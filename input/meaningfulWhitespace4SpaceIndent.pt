@@ -1,18 +1,18 @@
 const condition = true;
 
-if (condition):
+if condition:
     console.log();
     console.log();
 
-while (condition):
+while condition:
     console.log();
     console.log();
 
-for (const element of []):
+for const element of []:
     console.log()
     console.log()
 
-switch (condition):
+switch condition:
     case true:
         console.log()
         console.log()

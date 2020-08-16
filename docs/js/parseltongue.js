@@ -4300,7 +4300,7 @@ function getRangeWithoutCommentsFromArray(array, index, length, expectedKind) {
         const childKind = child.getKind();
         if (childKind !== ts$1.SyntaxKind.SingleLineCommentTrivia && childKind !== ts$1.SyntaxKind.MultiLineCommentTrivia) {
             if (childKind !== expectedKind) {
-                throw new errors.NotImplementedError(`Unexpected! Inserting syntax kind of ${common.getSyntaxKindName(expectedKind)}`
+                throw new errors.NotImplementedError(`Unexpected! Inserting syntax kind of ${getSyntaxKindName(expectedKind)}`
                     + `, but ${child.getKindName()} was inserted.`);
             }
             children.push(child);
@@ -4653,7 +4653,7 @@ function* getNodes(container, sourceFile) {
                 return CompilerCommentObjectLiteralElement;
             if (ts$1.isEnumDeclaration(container))
                 return CompilerCommentEnumMember;
-            throw new errors.NotImplementedError(`Not implemented comment node container type: ${common.getSyntaxKindName(container.kind)}`);
+            throw new errors.NotImplementedError(`Not implemented comment node container type: ${getSyntaxKindName(container.kind)}`);
         }
     }
 }
@@ -4802,7 +4802,7 @@ class StraightReplacementNodeHandler {
     handleNode(currentNode, newNode, newSourceFile) {
         if (currentNode.getKind() !== newNode.kind) {
             throw new errors.InvalidOperationError(`Error replacing tree! Perhaps a syntax error was inserted `
-                + `(Current: ${currentNode.getKindName()} -- New: ${common.getSyntaxKindName(newNode.kind)}).`);
+                + `(Current: ${currentNode.getKindName()} -- New: ${getSyntaxKindName(newNode.kind)}).`);
         }
         if (currentNode._hasWrappedChildren())
             this.handleChildren(currentNode, newNode, newSourceFile);
@@ -6397,7 +6397,7 @@ class Node {
         return this.compilerNode.kind;
     }
     getKindName() {
-        return common.getSyntaxKindName(this.compilerNode.kind);
+        return getSyntaxKindName(this.compilerNode.kind);
     }
     print(options = {}) {
         if (options.newLineKind == null)
@@ -6891,7 +6891,7 @@ class Node {
         return node;
     }
     getParentWhileKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getParentWhileKind(kind), `The initial parent was not a syntax kind of ${common.getSyntaxKindName(kind)}.`);
+        return errors.throwIfNullOrUndefined(this.getParentWhileKind(kind), `The initial parent was not a syntax kind of ${getSyntaxKindName(kind)}.`);
     }
     getParentWhileKind(kind) {
         return this.getParentWhile(n => n.getKind() === kind);
@@ -7091,21 +7091,21 @@ class Node {
         return this._getCompilerChildrenOfKind(kind).map(c => this._getNodeFromCompilerNode(c));
     }
     getFirstChildByKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getFirstChildByKind(kind), `A child of the kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getFirstChildByKind(kind), `A child of the kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getFirstChildByKind(kind) {
         const child = this._getCompilerChildrenOfKind(kind)[0];
         return child == null ? undefined : this._getNodeFromCompilerNode(child);
     }
     getFirstChildIfKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getFirstChildIfKind(kind), `A first child of the kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getFirstChildIfKind(kind), `A first child of the kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getFirstChildIfKind(kind) {
         const firstChild = this._getCompilerFirstChild();
         return firstChild != null && firstChild.kind === kind ? this._getNodeFromCompilerNode(firstChild) : undefined;
     }
     getLastChildByKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getLastChildByKind(kind), `A child of the kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getLastChildByKind(kind), `A child of the kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getLastChildByKind(kind) {
         const children = this._getCompilerChildrenOfKind(kind);
@@ -7113,24 +7113,24 @@ class Node {
         return this._getNodeFromCompilerNodeIfExists(lastChild);
     }
     getLastChildIfKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getLastChildIfKind(kind), `A last child of the kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getLastChildIfKind(kind), `A last child of the kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getLastChildIfKind(kind) {
         const lastChild = this._getCompilerLastChild();
         return lastChild != null && lastChild.kind === kind ? this._getNodeFromCompilerNode(lastChild) : undefined;
     }
     getChildAtIndexIfKindOrThrow(index, kind) {
-        return errors.throwIfNullOrUndefined(this.getChildAtIndexIfKind(index, kind), `Child at index ${index} was expected to be ${common.getSyntaxKindName(kind)}`);
+        return errors.throwIfNullOrUndefined(this.getChildAtIndexIfKind(index, kind), `Child at index ${index} was expected to be ${getSyntaxKindName(kind)}`);
     }
     getChildAtIndexIfKind(index, kind) {
         const node = this._getCompilerChildAtIndex(index);
         return node.kind === kind ? this._getNodeFromCompilerNode(node) : undefined;
     }
     getPreviousSiblingIfKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getPreviousSiblingIfKind(kind), `A previous sibling of kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getPreviousSiblingIfKind(kind), `A previous sibling of kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getNextSiblingIfKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getNextSiblingIfKind(kind), `A next sibling of kind ${common.getSyntaxKindName(kind)} was expected.`);
+        return errors.throwIfNullOrUndefined(this.getNextSiblingIfKind(kind), `A next sibling of kind ${getSyntaxKindName(kind)} was expected.`);
     }
     getPreviousSiblingIfKind(kind) {
         const previousSibling = this._getCompilerPreviousSibling();
@@ -7149,13 +7149,13 @@ class Node {
         return condition(this.getParent(), this) ? this.getParent() : undefined;
     }
     getParentIfKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getParentIfKind(kind), `The parent was not a syntax kind of ${common.getSyntaxKindName(kind)}.`);
+        return errors.throwIfNullOrUndefined(this.getParentIfKind(kind), `The parent was not a syntax kind of ${getSyntaxKindName(kind)}.`);
     }
     getParentIfKind(kind) {
         return this.getParentIf(n => n !== undefined && n.getKind() === kind);
     }
     getFirstAncestorByKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getFirstAncestorByKind(kind), `Expected an ancestor with a syntax kind of ${common.getSyntaxKindName(kind)}.`);
+        return errors.throwIfNullOrUndefined(this.getFirstAncestorByKind(kind), `Expected an ancestor with a syntax kind of ${getSyntaxKindName(kind)}.`);
     }
     getFirstAncestorByKind(kind) {
         for (const parent of this._getAncestorsIterator(kind === ts$1.SyntaxKind.SyntaxList)) {
@@ -7181,7 +7181,7 @@ class Node {
         return descendants;
     }
     getFirstDescendantByKindOrThrow(kind) {
-        return errors.throwIfNullOrUndefined(this.getFirstDescendantByKind(kind), `A descendant of kind ${common.getSyntaxKindName(kind)} was expected to be found.`);
+        return errors.throwIfNullOrUndefined(this.getFirstDescendantByKind(kind), `A descendant of kind ${getSyntaxKindName(kind)} was expected to be found.`);
     }
     getFirstDescendantByKind(kind) {
         for (const descendant of this._getCompilerDescendantsOfKindIterator(kind))
@@ -9135,7 +9135,7 @@ function ModifierableNode(Base) {
             return this.getCompilerModifiers().map(m => this._getNodeFromCompilerNode(m));
         }
         getFirstModifierByKindOrThrow(kind) {
-            return errors.throwIfNullOrUndefined(this.getFirstModifierByKind(kind), `Expected a modifier of syntax kind: ${common.getSyntaxKindName(kind)}`);
+            return errors.throwIfNullOrUndefined(this.getFirstModifierByKind(kind), `Expected a modifier of syntax kind: ${getSyntaxKindName(kind)}`);
         }
         getFirstModifierByKind(kind) {
             for (const modifier of this.getCompilerModifiers()) {
@@ -11639,7 +11639,7 @@ function HeritageClauseableNode(Base) {
             return (_a = heritageClauses === null || heritageClauses === void 0 ? void 0 : heritageClauses.map(c => this._getNodeFromCompilerNode(c))) !== null && _a !== void 0 ? _a : [];
         }
         getHeritageClauseByKindOrThrow(kind) {
-            return errors.throwIfNullOrUndefined(this.getHeritageClauseByKind(kind), `Expected to have heritage clause of kind ${common.getSyntaxKindName(kind)}.`);
+            return errors.throwIfNullOrUndefined(this.getHeritageClauseByKind(kind), `Expected to have heritage clause of kind ${getSyntaxKindName(kind)}.`);
         }
         getHeritageClauseByKind(kind) {
             return this.getHeritageClauses().find(c => c.compilerNode.token === kind);
@@ -11727,7 +11727,7 @@ function InitializerExpressionGetableNode(Base) {
             return this.compilerNode.initializer != null;
         }
         getInitializerIfKindOrThrow(kind) {
-            return errors.throwIfNullOrUndefined(this.getInitializerIfKind(kind), `Expected to find an initializer of kind '${common.getSyntaxKindName(kind)}'.`);
+            return errors.throwIfNullOrUndefined(this.getInitializerIfKind(kind), `Expected to find an initializer of kind '${getSyntaxKindName(kind)}'.`);
         }
         getInitializerIfKind(kind) {
             const initializer = this.getInitializer();
@@ -13306,7 +13306,7 @@ function ExpressionedNode(Base) {
             return expression.kind === kind ? this._getNodeFromCompilerNode(expression) : undefined;
         }
         getExpressionIfKindOrThrow(kind) {
-            return errors.throwIfNullOrUndefined(this.getExpressionIfKind(kind), `An expression of the kind ${common.getSyntaxKindName(kind)} was expected.`);
+            return errors.throwIfNullOrUndefined(this.getExpressionIfKind(kind), `An expression of the kind ${getSyntaxKindName(kind)} was expected.`);
         }
         setExpression(textOrWriterFunction) {
             this.getExpression().replaceWithText(textOrWriterFunction);
@@ -13796,7 +13796,7 @@ function StatementedNode(Base) {
             return this._getNodeFromCompilerNodeIfExists(statement);
         }
         getStatementByKindOrThrow(kind) {
-            return errors.throwIfNullOrUndefined(this.getStatementByKind(kind), `Expected to find a statement with syntax kind ${common.getSyntaxKindName(kind)}.`);
+            return errors.throwIfNullOrUndefined(this.getStatementByKind(kind), `Expected to find a statement with syntax kind ${getSyntaxKindName(kind)}.`);
         }
         addStatements(textOrWriterFunction) {
             return this.insertStatements(this._getCompilerStatementsWithComments().length, textOrWriterFunction);

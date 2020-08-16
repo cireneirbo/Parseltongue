@@ -3394,8 +3394,6 @@ function getSpacesAndTabsCount(str) {
 
 const { ts: ts$1 } = globalThis;
 
-const exports = {};
-
 class AdvancedIterator {
     constructor(iterator) {
         this.iterator = iterator;
@@ -3596,12 +3594,12 @@ function printNode(node, sourceFileOrOptions, secondOverloadOptions) {
     }
 }
 
-(function(IndentationText) {
-    IndentationText["TwoSpaces"] = "  ";
-    IndentationText["FourSpaces"] = "    ";
-    IndentationText["EightSpaces"] = "        ";
-    IndentationText["Tab"] = "\t";
-})(exports.IndentationText || (exports.IndentationText = {}));
+const IndentationText = {};
+IndentationText["TwoSpaces"] = "  ";
+IndentationText["FourSpaces"] = "    ";
+IndentationText["EightSpaces"] = "        ";
+IndentationText["Tab"] = "\t";
+
 class SettingsContainer$1 {
     constructor(defaultSettings) {
         this._defaultSettings = ObjectUtils.assign({}, defaultSettings);
@@ -3631,9 +3629,9 @@ class SettingsContainer$1 {
 class ManipulationSettingsContainer extends SettingsContainer$1 {
     constructor() {
         super({
-            indentationText: exports.IndentationText.FourSpaces,
+            indentationText: IndentationText.FourSpaces,
             newLineKind: ts$1.NewLineKind.LineFeed,
-            quoteKind: exports.QuoteKind.Double,
+            quoteKind: QuoteKind.Double,
             insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
             usePrefixAndSuffixTextForRename: false,
             useTrailingCommas: false,
@@ -3655,7 +3653,7 @@ class ManipulationSettingsContainer extends SettingsContainer$1 {
     getUserPreferences() {
         if (this._userPreferences == null) {
             this._userPreferences = {
-                quotePreference: this.getQuoteKind() === exports.QuoteKind.Double ? "double" : "single",
+                quotePreference: this.getQuoteKind() === QuoteKind.Double ? "double" : "single",
                 providePrefixAndSuffixTextForRename: this.getUsePrefixAndSuffixTextForRename(),
             };
         }
@@ -3688,13 +3686,13 @@ class ManipulationSettingsContainer extends SettingsContainer$1 {
     _getIndentSizeInSpaces() {
         const indentationText = this.getIndentationText();
         switch (indentationText) {
-            case exports.IndentationText.EightSpaces:
+            case IndentationText.EightSpaces:
                 return 8;
-            case exports.IndentationText.FourSpaces:
+            case IndentationText.FourSpaces:
                 return 4;
-            case exports.IndentationText.TwoSpaces:
+            case IndentationText.TwoSpaces:
                 return 2;
-            case exports.IndentationText.Tab:
+            case IndentationText.Tab:
                 return 4;
             default:
                 return errors.throwNotImplementedForNeverValueError(indentationText);
@@ -3708,7 +3706,7 @@ function setValueIfUndefined(obj, propertyName, defaultValue) {
 }
 
 function fillDefaultEditorSettings(settings, manipulationSettings) {
-    setValueIfUndefined(settings, "convertTabsToSpaces", manipulationSettings.getIndentationText() !== exports.IndentationText.Tab);
+    setValueIfUndefined(settings, "convertTabsToSpaces", manipulationSettings.getIndentationText() !== IndentationText.Tab);
     setValueIfUndefined(settings, "newLineCharacter", manipulationSettings.getNewLineKindAsString());
     setValueIfUndefined(settings, "indentStyle", ts$1.IndentStyle.Smart);
     setValueIfUndefined(settings, "indentSize", manipulationSettings.getIndentationText().length);
@@ -3981,13 +3979,11 @@ function AmbientableNode(Base) {
     };
 }
 
-var FormattingKind;
-(function(FormattingKind) {
-    FormattingKind[FormattingKind["Newline"] = 0] = "Newline";
-    FormattingKind[FormattingKind["Blankline"] = 1] = "Blankline";
-    FormattingKind[FormattingKind["Space"] = 2] = "Space";
-    FormattingKind[FormattingKind["None"] = 3] = "None";
-})(FormattingKind || (FormattingKind = {}));
+const FormattingKind = {};
+FormattingKind[FormattingKind["Newline"] = 0] = "Newline";
+FormattingKind[FormattingKind["Blankline"] = 1] = "Blankline";
+FormattingKind[FormattingKind["Space"] = 2] = "Space";
+FormattingKind[FormattingKind["None"] = 3] = "None";
 
 function getClassMemberFormatting(parent, member) {
     if (Node.isAmbientableNode(parent) && parent.isAmbient())
@@ -4345,13 +4341,13 @@ function verifyAndGetIndex(index, length) {
     return newIndex;
 }
 
-(function(CommentNodeKind) {
-    CommentNodeKind[CommentNodeKind["Statement"] = 0] = "Statement";
-    CommentNodeKind[CommentNodeKind["ClassElement"] = 1] = "ClassElement";
-    CommentNodeKind[CommentNodeKind["TypeElement"] = 2] = "TypeElement";
-    CommentNodeKind[CommentNodeKind["ObjectLiteralElement"] = 3] = "ObjectLiteralElement";
-    CommentNodeKind[CommentNodeKind["EnumMember"] = 4] = "EnumMember";
-})(exports.CommentNodeKind || (exports.CommentNodeKind = {}));
+const CommentNodeKind = {};
+CommentNodeKind[CommentNodeKind["Statement"] = 0] = "Statement";
+CommentNodeKind[CommentNodeKind["ClassElement"] = 1] = "ClassElement";
+CommentNodeKind[CommentNodeKind["TypeElement"] = 2] = "TypeElement";
+CommentNodeKind[CommentNodeKind["ObjectLiteralElement"] = 3] = "ObjectLiteralElement";
+CommentNodeKind[CommentNodeKind["EnumMember"] = 4] = "EnumMember";
+
 class CompilerCommentNode {
     constructor(fullStart, pos, end, kind, sourceFile, parent) {
         this._fullStart = fullStart;
@@ -4412,40 +4408,39 @@ class CompilerCommentNode {
 class CompilerCommentStatement extends CompilerCommentNode {
     constructor() {
         super(...arguments);
-        this._commentKind = exports.CommentNodeKind.Statement;
+        this._commentKind = CommentNodeKind.Statement;
     }
 }
 class CompilerCommentClassElement extends CompilerCommentNode {
     constructor() {
         super(...arguments);
-        this._commentKind = exports.CommentNodeKind.ClassElement;
+        this._commentKind = CommentNodeKind.ClassElement;
     }
 }
 class CompilerCommentTypeElement extends CompilerCommentNode {
     constructor() {
         super(...arguments);
-        this._commentKind = exports.CommentNodeKind.TypeElement;
+        this._commentKind = CommentNodeKind.TypeElement;
     }
 }
 class CompilerCommentObjectLiteralElement extends CompilerCommentNode {
     constructor() {
         super(...arguments);
-        this._commentKind = exports.CommentNodeKind.ObjectLiteralElement;
+        this._commentKind = CommentNodeKind.ObjectLiteralElement;
     }
 }
 class CompilerCommentEnumMember extends CompilerCommentNode {
     constructor() {
         super(...arguments);
-        this._commentKind = exports.CommentNodeKind.EnumMember;
+        this._commentKind = CommentNodeKind.EnumMember;
     }
 }
 
-var CommentKind;
-(function(CommentKind) {
-    CommentKind[CommentKind["SingleLine"] = 0] = "SingleLine";
-    CommentKind[CommentKind["MultiLine"] = 1] = "MultiLine";
-    CommentKind[CommentKind["JsDoc"] = 2] = "JsDoc";
-})(CommentKind || (CommentKind = {}));
+const CommentKind = {};
+CommentKind[CommentKind["SingleLine"] = 0] = "SingleLine";
+CommentKind[CommentKind["MultiLine"] = 1] = "MultiLine";
+CommentKind[CommentKind["JsDoc"] = 2] = "JsDoc";
+
 const childrenSaver = new WeakMap();
 const commentNodeParserKinds = new Set([
     ts$1.SyntaxKind.SourceFile,
@@ -4483,19 +4478,19 @@ class CommentNodeParser {
         return childrenSaver.has(container);
     }
     static isCommentStatement(node) {
-        return node._commentKind === exports.CommentNodeKind.Statement;
+        return node._commentKind === CommentNodeKind.Statement;
     }
     static isCommentClassElement(node) {
-        return node._commentKind === exports.CommentNodeKind.ClassElement;
+        return node._commentKind === CommentNodeKind.ClassElement;
     }
     static isCommentTypeElement(node) {
-        return node._commentKind === exports.CommentNodeKind.TypeElement;
+        return node._commentKind === CommentNodeKind.TypeElement;
     }
     static isCommentObjectLiteralElement(node) {
-        return node._commentKind === exports.CommentNodeKind.ObjectLiteralElement;
+        return node._commentKind === CommentNodeKind.ObjectLiteralElement;
     }
     static isCommentEnumMember(node) {
-        return node._commentKind === exports.CommentNodeKind.EnumMember;
+        return node._commentKind === CommentNodeKind.EnumMember;
     }
     static getContainerBodyPos(container, sourceFile) {
         if (ts$1.isSourceFile(container))
@@ -7351,19 +7346,19 @@ class Node {
         return kind === ts$1.SyntaxKind.SingleLineCommentTrivia || kind === ts$1.SyntaxKind.MultiLineCommentTrivia;
     }
     static isCommentStatement(node) {
-        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === exports.CommentNodeKind.Statement;
+        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === CommentNodeKind.Statement;
     }
     static isCommentClassElement(node) {
-        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === exports.CommentNodeKind.ClassElement;
+        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === CommentNodeKind.ClassElement;
     }
     static isCommentTypeElement(node) {
-        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === exports.CommentNodeKind.TypeElement;
+        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === CommentNodeKind.TypeElement;
     }
     static isCommentObjectLiteralElement(node) {
-        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === exports.CommentNodeKind.ObjectLiteralElement;
+        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === CommentNodeKind.ObjectLiteralElement;
     }
     static isCommentEnumMember(node) {
-        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind == exports.CommentNodeKind.EnumMember;
+        return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind == CommentNodeKind.EnumMember;
     }
     static isAbstractableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
@@ -8852,11 +8847,10 @@ function useParseTreeSearchForKind(thisNodeOrSyntaxKind, searchingKind) {
     }
 }
 
-(function(Scope) {
-    Scope["Public"] = "public";
-    Scope["Protected"] = "protected";
-    Scope["Private"] = "private";
-})(exports.Scope || (exports.Scope = {}));
+const Scope = {};
+Scope["Public"] = "public";
+Scope["Protected"] = "protected";
+Scope["Private"] = "private";
 
 class SyntaxList extends Node {
     addChildText(textOrWriterFunction) {
@@ -9711,79 +9705,78 @@ class ClassDeclarationStructurePrinter extends NodePrinter {
     }
 }
 
-(function(StructureKind) {
-    StructureKind[StructureKind["CallSignature"] = 0] = "CallSignature";
-    StructureKind[StructureKind["Class"] = 1] = "Class";
-    StructureKind[StructureKind["ConstructSignature"] = 2] = "ConstructSignature";
-    StructureKind[StructureKind["Constructor"] = 3] = "Constructor";
-    StructureKind[StructureKind["ConstructorOverload"] = 4] = "ConstructorOverload";
-    StructureKind[StructureKind["Decorator"] = 5] = "Decorator";
-    StructureKind[StructureKind["Enum"] = 6] = "Enum";
-    StructureKind[StructureKind["EnumMember"] = 7] = "EnumMember";
-    StructureKind[StructureKind["ExportAssignment"] = 8] = "ExportAssignment";
-    StructureKind[StructureKind["ExportDeclaration"] = 9] = "ExportDeclaration";
-    StructureKind[StructureKind["ExportSpecifier"] = 10] = "ExportSpecifier";
-    StructureKind[StructureKind["Function"] = 11] = "Function";
-    StructureKind[StructureKind["FunctionOverload"] = 12] = "FunctionOverload";
-    StructureKind[StructureKind["GetAccessor"] = 13] = "GetAccessor";
-    StructureKind[StructureKind["ImportDeclaration"] = 14] = "ImportDeclaration";
-    StructureKind[StructureKind["ImportSpecifier"] = 15] = "ImportSpecifier";
-    StructureKind[StructureKind["IndexSignature"] = 16] = "IndexSignature";
-    StructureKind[StructureKind["Interface"] = 17] = "Interface";
-    StructureKind[StructureKind["JsxAttribute"] = 18] = "JsxAttribute";
-    StructureKind[StructureKind["JsxSpreadAttribute"] = 19] = "JsxSpreadAttribute";
-    StructureKind[StructureKind["JsxElement"] = 20] = "JsxElement";
-    StructureKind[StructureKind["JsxSelfClosingElement"] = 21] = "JsxSelfClosingElement";
-    StructureKind[StructureKind["JSDoc"] = 22] = "JSDoc";
-    StructureKind[StructureKind["JSDocTag"] = 23] = "JSDocTag";
-    StructureKind[StructureKind["Method"] = 24] = "Method";
-    StructureKind[StructureKind["MethodOverload"] = 25] = "MethodOverload";
-    StructureKind[StructureKind["MethodSignature"] = 26] = "MethodSignature";
-    StructureKind[StructureKind["Namespace"] = 27] = "Namespace";
-    StructureKind[StructureKind["Parameter"] = 28] = "Parameter";
-    StructureKind[StructureKind["Property"] = 29] = "Property";
-    StructureKind[StructureKind["PropertyAssignment"] = 30] = "PropertyAssignment";
-    StructureKind[StructureKind["PropertySignature"] = 31] = "PropertySignature";
-    StructureKind[StructureKind["SetAccessor"] = 32] = "SetAccessor";
-    StructureKind[StructureKind["ShorthandPropertyAssignment"] = 33] = "ShorthandPropertyAssignment";
-    StructureKind[StructureKind["SourceFile"] = 34] = "SourceFile";
-    StructureKind[StructureKind["SpreadAssignment"] = 35] = "SpreadAssignment";
-    StructureKind[StructureKind["TypeAlias"] = 36] = "TypeAlias";
-    StructureKind[StructureKind["TypeParameter"] = 37] = "TypeParameter";
-    StructureKind[StructureKind["VariableDeclaration"] = 38] = "VariableDeclaration";
-    StructureKind[StructureKind["VariableStatement"] = 39] = "VariableStatement";
-})(exports.StructureKind || (exports.StructureKind = {}));
+const StructureKind = {};
+StructureKind[StructureKind["CallSignature"] = 0] = "CallSignature";
+StructureKind[StructureKind["Class"] = 1] = "Class";
+StructureKind[StructureKind["ConstructSignature"] = 2] = "ConstructSignature";
+StructureKind[StructureKind["Constructor"] = 3] = "Constructor";
+StructureKind[StructureKind["ConstructorOverload"] = 4] = "ConstructorOverload";
+StructureKind[StructureKind["Decorator"] = 5] = "Decorator";
+StructureKind[StructureKind["Enum"] = 6] = "Enum";
+StructureKind[StructureKind["EnumMember"] = 7] = "EnumMember";
+StructureKind[StructureKind["ExportAssignment"] = 8] = "ExportAssignment";
+StructureKind[StructureKind["ExportDeclaration"] = 9] = "ExportDeclaration";
+StructureKind[StructureKind["ExportSpecifier"] = 10] = "ExportSpecifier";
+StructureKind[StructureKind["Function"] = 11] = "Function";
+StructureKind[StructureKind["FunctionOverload"] = 12] = "FunctionOverload";
+StructureKind[StructureKind["GetAccessor"] = 13] = "GetAccessor";
+StructureKind[StructureKind["ImportDeclaration"] = 14] = "ImportDeclaration";
+StructureKind[StructureKind["ImportSpecifier"] = 15] = "ImportSpecifier";
+StructureKind[StructureKind["IndexSignature"] = 16] = "IndexSignature";
+StructureKind[StructureKind["Interface"] = 17] = "Interface";
+StructureKind[StructureKind["JsxAttribute"] = 18] = "JsxAttribute";
+StructureKind[StructureKind["JsxSpreadAttribute"] = 19] = "JsxSpreadAttribute";
+StructureKind[StructureKind["JsxElement"] = 20] = "JsxElement";
+StructureKind[StructureKind["JsxSelfClosingElement"] = 21] = "JsxSelfClosingElement";
+StructureKind[StructureKind["JSDoc"] = 22] = "JSDoc";
+StructureKind[StructureKind["JSDocTag"] = 23] = "JSDocTag";
+StructureKind[StructureKind["Method"] = 24] = "Method";
+StructureKind[StructureKind["MethodOverload"] = 25] = "MethodOverload";
+StructureKind[StructureKind["MethodSignature"] = 26] = "MethodSignature";
+StructureKind[StructureKind["Namespace"] = 27] = "Namespace";
+StructureKind[StructureKind["Parameter"] = 28] = "Parameter";
+StructureKind[StructureKind["Property"] = 29] = "Property";
+StructureKind[StructureKind["PropertyAssignment"] = 30] = "PropertyAssignment";
+StructureKind[StructureKind["PropertySignature"] = 31] = "PropertySignature";
+StructureKind[StructureKind["SetAccessor"] = 32] = "SetAccessor";
+StructureKind[StructureKind["ShorthandPropertyAssignment"] = 33] = "ShorthandPropertyAssignment";
+StructureKind[StructureKind["SourceFile"] = 34] = "SourceFile";
+StructureKind[StructureKind["SpreadAssignment"] = 35] = "SpreadAssignment";
+StructureKind[StructureKind["TypeAlias"] = 36] = "TypeAlias";
+StructureKind[StructureKind["TypeParameter"] = 37] = "TypeParameter";
+StructureKind[StructureKind["VariableDeclaration"] = 38] = "VariableDeclaration";
+StructureKind[StructureKind["VariableStatement"] = 39] = "VariableStatement";
 
 const Structure = {
     hasName(structure) {
         return typeof structure.name === "string";
     },
     isClass(structure) {
-        return structure.kind === exports.StructureKind.Class;
+        return structure.kind === StructureKind.Class;
     },
     isClassLikeDeclarationBase(structure) {
-        return structure.kind === exports.StructureKind.Class;
+        return structure.kind === StructureKind.Class;
     },
     isNameable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.Function:
+            case StructureKind.Class:
+            case StructureKind.Function:
                 return true;
             default:
                 return false;
         }
     },
     isImplementsClauseable(structure) {
-        return structure.kind === exports.StructureKind.Class;
+        return structure.kind === StructureKind.Class;
     },
     isDecoratable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Parameter:
+            case StructureKind.Class:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
+            case StructureKind.Parameter:
                 return true;
             default:
                 return false;
@@ -9791,20 +9784,20 @@ const Structure = {
     },
     isTypeParametered(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.CallSignature:
-            case exports.StructureKind.ConstructSignature:
-            case exports.StructureKind.Interface:
-            case exports.StructureKind.MethodSignature:
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.Class:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.CallSignature:
+            case StructureKind.ConstructSignature:
+            case StructureKind.Interface:
+            case StructureKind.MethodSignature:
+            case StructureKind.TypeAlias:
                 return true;
             default:
                 return false;
@@ -9812,27 +9805,27 @@ const Structure = {
     },
     isJSDocable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Enum:
-            case exports.StructureKind.EnumMember:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.CallSignature:
-            case exports.StructureKind.ConstructSignature:
-            case exports.StructureKind.IndexSignature:
-            case exports.StructureKind.Interface:
-            case exports.StructureKind.MethodSignature:
-            case exports.StructureKind.PropertySignature:
-            case exports.StructureKind.Namespace:
-            case exports.StructureKind.VariableStatement:
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.Class:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
+            case StructureKind.Enum:
+            case StructureKind.EnumMember:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.CallSignature:
+            case StructureKind.ConstructSignature:
+            case StructureKind.IndexSignature:
+            case StructureKind.Interface:
+            case StructureKind.MethodSignature:
+            case StructureKind.PropertySignature:
+            case StructureKind.Namespace:
+            case StructureKind.VariableStatement:
+            case StructureKind.TypeAlias:
                 return true;
             default:
                 return false;
@@ -9840,12 +9833,12 @@ const Structure = {
     },
     isAbstractable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
+            case StructureKind.Class:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
                 return true;
             default:
                 return false;
@@ -9853,15 +9846,15 @@ const Structure = {
     },
     isAmbientable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.Enum:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.Interface:
-            case exports.StructureKind.Namespace:
-            case exports.StructureKind.VariableStatement:
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.Class:
+            case StructureKind.Property:
+            case StructureKind.Enum:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.Interface:
+            case StructureKind.Namespace:
+            case StructureKind.VariableStatement:
+            case StructureKind.TypeAlias:
                 return true;
             default:
                 return false;
@@ -9869,31 +9862,31 @@ const Structure = {
     },
     isExportable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Class:
-            case exports.StructureKind.Enum:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.Interface:
-            case exports.StructureKind.Namespace:
-            case exports.StructureKind.VariableStatement:
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.Class:
+            case StructureKind.Enum:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.Interface:
+            case StructureKind.Namespace:
+            case StructureKind.VariableStatement:
+            case StructureKind.TypeAlias:
                 return true;
             default:
                 return false;
         }
     },
     isConstructor(structure) {
-        return structure.kind === exports.StructureKind.Constructor;
+        return structure.kind === StructureKind.Constructor;
     },
     isScoped(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
                 return true;
             default:
                 return false;
@@ -9901,11 +9894,11 @@ const Structure = {
     },
     isFunctionLike(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
+            case StructureKind.Constructor:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
                 return true;
             default:
                 return false;
@@ -9913,17 +9906,17 @@ const Structure = {
     },
     isSignatured(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.CallSignature:
-            case exports.StructureKind.ConstructSignature:
-            case exports.StructureKind.MethodSignature:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.CallSignature:
+            case StructureKind.ConstructSignature:
+            case StructureKind.MethodSignature:
                 return true;
             default:
                 return false;
@@ -9931,17 +9924,17 @@ const Structure = {
     },
     isParametered(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.CallSignature:
-            case exports.StructureKind.ConstructSignature:
-            case exports.StructureKind.MethodSignature:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.CallSignature:
+            case StructureKind.ConstructSignature:
+            case StructureKind.MethodSignature:
                 return true;
             default:
                 return false;
@@ -9949,18 +9942,18 @@ const Structure = {
     },
     isReturnTyped(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.ConstructorOverload:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
-            case exports.StructureKind.CallSignature:
-            case exports.StructureKind.ConstructSignature:
-            case exports.StructureKind.IndexSignature:
-            case exports.StructureKind.MethodSignature:
+            case StructureKind.Constructor:
+            case StructureKind.ConstructorOverload:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
+            case StructureKind.CallSignature:
+            case StructureKind.ConstructSignature:
+            case StructureKind.IndexSignature:
+            case StructureKind.MethodSignature:
                 return true;
             default:
                 return false;
@@ -9968,34 +9961,34 @@ const Structure = {
     },
     isStatemented(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Constructor:
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.Namespace:
-            case exports.StructureKind.SourceFile:
+            case StructureKind.Constructor:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.SetAccessor:
+            case StructureKind.Function:
+            case StructureKind.Namespace:
+            case StructureKind.SourceFile:
                 return true;
             default:
                 return false;
         }
     },
     isConstructorDeclarationOverload(structure) {
-        return structure.kind === exports.StructureKind.ConstructorOverload;
+        return structure.kind === StructureKind.ConstructorOverload;
     },
     isGetAccessor(structure) {
-        return structure.kind === exports.StructureKind.GetAccessor;
+        return structure.kind === StructureKind.GetAccessor;
     },
     isPropertyNamed(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
-            case exports.StructureKind.EnumMember:
-            case exports.StructureKind.MethodSignature:
-            case exports.StructureKind.PropertySignature:
-            case exports.StructureKind.PropertyAssignment:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
+            case StructureKind.EnumMember:
+            case StructureKind.MethodSignature:
+            case StructureKind.PropertySignature:
+            case StructureKind.PropertyAssignment:
                 return true;
             default:
                 return false;
@@ -10003,25 +9996,25 @@ const Structure = {
     },
     isStaticable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.GetAccessor:
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.SetAccessor:
+            case StructureKind.GetAccessor:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Property:
+            case StructureKind.SetAccessor:
                 return true;
             default:
                 return false;
         }
     },
     isMethod(structure) {
-        return structure.kind === exports.StructureKind.Method;
+        return structure.kind === StructureKind.Method;
     },
     isAsyncable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
                 return true;
             default:
                 return false;
@@ -10029,10 +10022,10 @@ const Structure = {
     },
     isGeneratorable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Function:
-            case exports.StructureKind.FunctionOverload:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Function:
+            case StructureKind.FunctionOverload:
                 return true;
             default:
                 return false;
@@ -10040,30 +10033,30 @@ const Structure = {
     },
     isQuestionTokenable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Method:
-            case exports.StructureKind.MethodOverload:
-            case exports.StructureKind.Property:
-            case exports.StructureKind.Parameter:
-            case exports.StructureKind.MethodSignature:
-            case exports.StructureKind.PropertySignature:
+            case StructureKind.Method:
+            case StructureKind.MethodOverload:
+            case StructureKind.Property:
+            case StructureKind.Parameter:
+            case StructureKind.MethodSignature:
+            case StructureKind.PropertySignature:
                 return true;
             default:
                 return false;
         }
     },
     isMethodDeclarationOverload(structure) {
-        return structure.kind === exports.StructureKind.MethodOverload;
+        return structure.kind === StructureKind.MethodOverload;
     },
     isProperty(structure) {
-        return structure.kind === exports.StructureKind.Property;
+        return structure.kind === StructureKind.Property;
     },
     isTyped(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Property:
-            case exports.StructureKind.Parameter:
-            case exports.StructureKind.PropertySignature:
-            case exports.StructureKind.VariableDeclaration:
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.Property:
+            case StructureKind.Parameter:
+            case StructureKind.PropertySignature:
+            case StructureKind.VariableDeclaration:
+            case StructureKind.TypeAlias:
                 return true;
             default:
                 return false;
@@ -10071,8 +10064,8 @@ const Structure = {
     },
     isExclamationTokenable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Property:
-            case exports.StructureKind.VariableDeclaration:
+            case StructureKind.Property:
+            case StructureKind.VariableDeclaration:
                 return true;
             default:
                 return false;
@@ -10080,10 +10073,10 @@ const Structure = {
     },
     isReadonlyable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Property:
-            case exports.StructureKind.Parameter:
-            case exports.StructureKind.IndexSignature:
-            case exports.StructureKind.PropertySignature:
+            case StructureKind.Property:
+            case StructureKind.Parameter:
+            case StructureKind.IndexSignature:
+            case StructureKind.PropertySignature:
                 return true;
             default:
                 return false;
@@ -10091,155 +10084,155 @@ const Structure = {
     },
     isInitializerExpressionable(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Property:
-            case exports.StructureKind.EnumMember:
-            case exports.StructureKind.Parameter:
-            case exports.StructureKind.PropertySignature:
-            case exports.StructureKind.VariableDeclaration:
+            case StructureKind.Property:
+            case StructureKind.EnumMember:
+            case StructureKind.Parameter:
+            case StructureKind.PropertySignature:
+            case StructureKind.VariableDeclaration:
                 return true;
             default:
                 return false;
         }
     },
     isSetAccessor(structure) {
-        return structure.kind === exports.StructureKind.SetAccessor;
+        return structure.kind === StructureKind.SetAccessor;
     },
     isDecorator(structure) {
-        return structure.kind === exports.StructureKind.Decorator;
+        return structure.kind === StructureKind.Decorator;
     },
     isJSDoc(structure) {
-        return structure.kind === exports.StructureKind.JSDoc;
+        return structure.kind === StructureKind.JSDoc;
     },
     isJSDocTag(structure) {
-        return structure.kind === exports.StructureKind.JSDocTag;
+        return structure.kind === StructureKind.JSDocTag;
     },
     isEnum(structure) {
-        return structure.kind === exports.StructureKind.Enum;
+        return structure.kind === StructureKind.Enum;
     },
     isNamed(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Enum:
-            case exports.StructureKind.Interface:
-            case exports.StructureKind.JsxAttribute:
-            case exports.StructureKind.Namespace:
-            case exports.StructureKind.TypeAlias:
-            case exports.StructureKind.TypeParameter:
-            case exports.StructureKind.ShorthandPropertyAssignment:
+            case StructureKind.Enum:
+            case StructureKind.Interface:
+            case StructureKind.JsxAttribute:
+            case StructureKind.Namespace:
+            case StructureKind.TypeAlias:
+            case StructureKind.TypeParameter:
+            case StructureKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
         }
     },
     isEnumMember(structure) {
-        return structure.kind === exports.StructureKind.EnumMember;
+        return structure.kind === StructureKind.EnumMember;
     },
     isFunction(structure) {
-        return structure.kind === exports.StructureKind.Function;
+        return structure.kind === StructureKind.Function;
     },
     isFunctionDeclarationOverload(structure) {
-        return structure.kind === exports.StructureKind.FunctionOverload;
+        return structure.kind === StructureKind.FunctionOverload;
     },
     isParameter(structure) {
-        return structure.kind === exports.StructureKind.Parameter;
+        return structure.kind === StructureKind.Parameter;
     },
     isBindingNamed(structure) {
         switch (structure.kind) {
-            case exports.StructureKind.Parameter:
-            case exports.StructureKind.VariableDeclaration:
+            case StructureKind.Parameter:
+            case StructureKind.VariableDeclaration:
                 return true;
             default:
                 return false;
         }
     },
     isScopeable(structure) {
-        return structure.kind === exports.StructureKind.Parameter;
+        return structure.kind === StructureKind.Parameter;
     },
     isCallSignature(structure) {
-        return structure.kind === exports.StructureKind.CallSignature;
+        return structure.kind === StructureKind.CallSignature;
     },
     isConstructSignature(structure) {
-        return structure.kind === exports.StructureKind.ConstructSignature;
+        return structure.kind === StructureKind.ConstructSignature;
     },
     isIndexSignature(structure) {
-        return structure.kind === exports.StructureKind.IndexSignature;
+        return structure.kind === StructureKind.IndexSignature;
     },
     isInterface(structure) {
-        return structure.kind === exports.StructureKind.Interface;
+        return structure.kind === StructureKind.Interface;
     },
     isExtendsClauseable(structure) {
-        return structure.kind === exports.StructureKind.Interface;
+        return structure.kind === StructureKind.Interface;
     },
     isTypeElementMembered(structure) {
-        return structure.kind === exports.StructureKind.Interface;
+        return structure.kind === StructureKind.Interface;
     },
     isMethodSignature(structure) {
-        return structure.kind === exports.StructureKind.MethodSignature;
+        return structure.kind === StructureKind.MethodSignature;
     },
     isPropertySignature(structure) {
-        return structure.kind === exports.StructureKind.PropertySignature;
+        return structure.kind === StructureKind.PropertySignature;
     },
     isJsxAttribute(structure) {
-        return structure.kind === exports.StructureKind.JsxAttribute;
+        return structure.kind === StructureKind.JsxAttribute;
     },
     isJsxElement(structure) {
-        return structure.kind === exports.StructureKind.JsxElement;
+        return structure.kind === StructureKind.JsxElement;
     },
     isJsxSelfClosingElement(structure) {
-        return structure.kind === exports.StructureKind.JsxSelfClosingElement;
+        return structure.kind === StructureKind.JsxSelfClosingElement;
     },
     isJsxTagNamed(structure) {
-        return structure.kind === exports.StructureKind.JsxSelfClosingElement;
+        return structure.kind === StructureKind.JsxSelfClosingElement;
     },
     isJsxAttributed(structure) {
-        return structure.kind === exports.StructureKind.JsxSelfClosingElement;
+        return structure.kind === StructureKind.JsxSelfClosingElement;
     },
     isJsxSpreadAttribute(structure) {
-        return structure.kind === exports.StructureKind.JsxSpreadAttribute;
+        return structure.kind === StructureKind.JsxSpreadAttribute;
     },
     isExportAssignment(structure) {
-        return structure.kind === exports.StructureKind.ExportAssignment;
+        return structure.kind === StructureKind.ExportAssignment;
     },
     isExportDeclaration(structure) {
-        return structure.kind === exports.StructureKind.ExportDeclaration;
+        return structure.kind === StructureKind.ExportDeclaration;
     },
     isExportSpecifier(structure) {
-        return structure.kind === exports.StructureKind.ExportSpecifier;
+        return structure.kind === StructureKind.ExportSpecifier;
     },
     isImportDeclaration(structure) {
-        return structure.kind === exports.StructureKind.ImportDeclaration;
+        return structure.kind === StructureKind.ImportDeclaration;
     },
     isImportSpecifier(structure) {
-        return structure.kind === exports.StructureKind.ImportSpecifier;
+        return structure.kind === StructureKind.ImportSpecifier;
     },
     isNamespace(structure) {
-        return structure.kind === exports.StructureKind.Namespace;
+        return structure.kind === StructureKind.Namespace;
     },
     isSourceFile(structure) {
-        return structure.kind === exports.StructureKind.SourceFile;
+        return structure.kind === StructureKind.SourceFile;
     },
     isVariableDeclaration(structure) {
-        return structure.kind === exports.StructureKind.VariableDeclaration;
+        return structure.kind === StructureKind.VariableDeclaration;
     },
     isVariableStatement(structure) {
-        return structure.kind === exports.StructureKind.VariableStatement;
+        return structure.kind === StructureKind.VariableStatement;
     },
     isTypeAlias(structure) {
-        return structure.kind === exports.StructureKind.TypeAlias;
+        return structure.kind === StructureKind.TypeAlias;
     },
     isTypeParameter(structure) {
-        return structure.kind === exports.StructureKind.TypeParameter;
+        return structure.kind === StructureKind.TypeParameter;
     },
     isPropertyAssignment(structure) {
-        return structure.kind === exports.StructureKind.PropertyAssignment;
+        return structure.kind === StructureKind.PropertyAssignment;
     },
     isShorthandPropertyAssignment(structure) {
-        return structure.kind === exports.StructureKind.ShorthandPropertyAssignment;
+        return structure.kind === StructureKind.ShorthandPropertyAssignment;
     },
     isSpreadAssignment(structure) {
-        return structure.kind === exports.StructureKind.SpreadAssignment;
+        return structure.kind === StructureKind.SpreadAssignment;
     },
     isExpressioned(structure) {
-        return structure.kind === exports.StructureKind.SpreadAssignment;
+        return structure.kind === StructureKind.SpreadAssignment;
     }
 };
 
@@ -10281,25 +10274,25 @@ class ClassMemberStructurePrinter extends Printer {
             return;
         }
         switch (member.kind) {
-            case exports.StructureKind.Method:
+            case StructureKind.Method:
                 if (!this.options.isAmbient)
                     ensureBlankLine();
                 this.factory.forMethodDeclaration(this.options).printText(writer, member);
                 break;
-            case exports.StructureKind.Property:
+            case StructureKind.Property:
                 this.factory.forPropertyDeclaration().printText(writer, member);
                 break;
-            case exports.StructureKind.GetAccessor:
+            case StructureKind.GetAccessor:
                 if (!this.options.isAmbient)
                     ensureBlankLine();
                 this.factory.forGetAccessorDeclaration(this.options).printText(writer, member);
                 break;
-            case exports.StructureKind.SetAccessor:
+            case StructureKind.SetAccessor:
                 if (!this.options.isAmbient)
                     ensureBlankLine();
                 this.factory.forSetAccessorDeclaration(this.options).printText(writer, member);
                 break;
-            case exports.StructureKind.Constructor:
+            case StructureKind.Constructor:
                 if (!this.options.isAmbient)
                     ensureBlankLine();
                 this.factory.forConstructorDeclaration(this.options).printText(writer, member);
@@ -10724,22 +10717,22 @@ class ObjectLiteralExpressionPropertyStructurePrinter extends Printer {
             return;
         }
         switch (member.kind) {
-            case exports.StructureKind.PropertyAssignment:
+            case StructureKind.PropertyAssignment:
                 this.factory.forPropertyAssignment().printText(writer, member);
                 break;
-            case exports.StructureKind.ShorthandPropertyAssignment:
+            case StructureKind.ShorthandPropertyAssignment:
                 this.factory.forShorthandPropertyAssignment().printText(writer, member);
                 break;
-            case exports.StructureKind.SpreadAssignment:
+            case StructureKind.SpreadAssignment:
                 this.factory.forSpreadAssignment().printText(writer, member);
                 break;
-            case exports.StructureKind.Method:
+            case StructureKind.Method:
                 this.factory.forMethodDeclaration(this.options).printText(writer, member);
                 break;
-            case exports.StructureKind.GetAccessor:
+            case StructureKind.GetAccessor:
                 this.factory.forGetAccessorDeclaration(this.options).printText(writer, member);
                 break;
-            case exports.StructureKind.SetAccessor:
+            case StructureKind.SetAccessor:
                 this.factory.forSetAccessorDeclaration(this.options).printText(writer, member);
                 break;
             default:
@@ -11037,19 +11030,19 @@ class TypeElementMemberStructurePrinter extends Printer {
             return;
         }
         switch (members.kind) {
-            case exports.StructureKind.PropertySignature:
+            case StructureKind.PropertySignature:
                 this.factory.forPropertySignature().printText(writer, members);
                 break;
-            case exports.StructureKind.MethodSignature:
+            case StructureKind.MethodSignature:
                 this.factory.forMethodSignature().printText(writer, members);
                 break;
-            case exports.StructureKind.CallSignature:
+            case StructureKind.CallSignature:
                 this.factory.forCallSignatureDeclaration().printText(writer, members);
                 break;
-            case exports.StructureKind.IndexSignature:
+            case StructureKind.IndexSignature:
                 this.factory.forIndexSignatureDeclaration().printText(writer, members);
                 break;
-            case exports.StructureKind.ConstructSignature:
+            case StructureKind.ConstructSignature:
                 this.factory.forConstructSignatureDeclaration().printText(writer, members);
                 break;
             default:
@@ -11070,12 +11063,12 @@ class JsxChildDeciderStructurePrinter extends NodePrinter {
     printTextInternal(writer, structure) {
         if (isJsxElement(structure))
             this.factory.forJsxElement().printText(writer, structure);
-        else if (structure.kind === exports.StructureKind.JsxSelfClosingElement)
+        else if (structure.kind === StructureKind.JsxSelfClosingElement)
             this.factory.forJsxSelfClosingElement().printText(writer, structure);
         else
             errors.throwNotImplementedForNeverValueError(structure);
         function isJsxElement(struct) {
-            return struct.kind == null || struct.kind === exports.StructureKind.JsxElement;
+            return struct.kind == null || struct.kind === StructureKind.JsxElement;
         }
     }
 }
@@ -11115,12 +11108,12 @@ class JsxAttributeDeciderStructurePrinter extends NodePrinter {
     printTextInternal(writer, structure) {
         if (isJsxAttribute())
             this.factory.forJsxAttribute().printText(writer, structure);
-        else if (structure.kind === exports.StructureKind.JsxSpreadAttribute)
+        else if (structure.kind === StructureKind.JsxSpreadAttribute)
             this.factory.forJsxSpreadAttribute().printText(writer, structure);
         else
             throw errors.throwNotImplementedForNeverValueError(structure);
         function isJsxAttribute(struct) {
-            return structure.kind == null || structure.kind === exports.StructureKind.JsxAttribute;
+            return structure.kind == null || structure.kind === StructureKind.JsxAttribute;
         }
     }
 }
@@ -11256,7 +11249,7 @@ class NamespaceDeclarationStructurePrinter extends NodePrinter {
         structure = this.validateAndGetStructure(structure);
         this.factory.forJSDoc().printDocs(writer, structure.docs);
         this.factory.forModifierableNode().printText(writer, structure);
-        if (structure.declarationKind == null || structure.declarationKind !== exports.NamespaceDeclarationKind.Global)
+        if (structure.declarationKind == null || structure.declarationKind !== NamespaceDeclarationKind.Global)
             writer.write(`${structure.declarationKind || "namespace"} ${structure.name} `);
         else
             writer.write("global ");
@@ -11270,13 +11263,13 @@ class NamespaceDeclarationStructurePrinter extends NodePrinter {
         const name = structure.name.trim();
         if (!name.startsWith("'") && !name.startsWith(`"`))
             return structure;
-        if (structure.declarationKind === exports.NamespaceDeclarationKind.Namespace) {
+        if (structure.declarationKind === NamespaceDeclarationKind.Namespace) {
             throw new errors.InvalidOperationError(`Cannot print a namespace with quotes for namespace with name ${structure.name}. `
                 + `Use ${"NamespaceDeclarationKind.Module"} instead.`);
         }
         structure = common.ObjectUtils.clone(structure);
         setValueIfUndefined(structure, "hasDeclareKeyword", true);
-        setValueIfUndefined(structure, "declarationKind", exports.NamespaceDeclarationKind.Module);
+        setValueIfUndefined(structure, "declarationKind", NamespaceDeclarationKind.Module);
         return structure;
     }
 }
@@ -11372,40 +11365,40 @@ class StatementStructurePrinter extends Printer {
             return;
         }
         switch (statement.kind) {
-            case exports.StructureKind.Function:
+            case StructureKind.Function:
                 if (!this.options.isAmbient)
                     ensureBlankLine();
                 this.factory.forFunctionDeclaration(this.options).printText(writer, statement);
                 break;
-            case exports.StructureKind.Class:
+            case StructureKind.Class:
                 ensureBlankLine();
                 this.factory.forClassDeclaration(this.options).printText(writer, statement);
                 break;
-            case exports.StructureKind.Interface:
+            case StructureKind.Interface:
                 ensureBlankLine();
                 this.factory.forInterfaceDeclaration().printText(writer, statement);
                 break;
-            case exports.StructureKind.TypeAlias:
+            case StructureKind.TypeAlias:
                 this.factory.forTypeAliasDeclaration().printText(writer, statement);
                 break;
-            case exports.StructureKind.VariableStatement:
+            case StructureKind.VariableStatement:
                 this.factory.forVariableStatement().printText(writer, statement);
                 break;
-            case exports.StructureKind.ImportDeclaration:
+            case StructureKind.ImportDeclaration:
                 this.factory.forImportDeclaration().printText(writer, statement);
                 break;
-            case exports.StructureKind.Namespace:
+            case StructureKind.Namespace:
                 ensureBlankLine();
                 this.factory.forNamespaceDeclaration(this.options).printText(writer, statement);
                 break;
-            case exports.StructureKind.Enum:
+            case StructureKind.Enum:
                 ensureBlankLine();
                 this.factory.forEnumDeclaration().printText(writer, statement);
                 break;
-            case exports.StructureKind.ExportDeclaration:
+            case StructureKind.ExportDeclaration:
                 this.factory.forExportDeclaration().printText(writer, statement);
                 break;
-            case exports.StructureKind.ExportAssignment:
+            case StructureKind.ExportAssignment:
                 this.factory.forExportAssignment().printText(writer, statement);
                 break;
             default:
@@ -11418,11 +11411,10 @@ class StatementStructurePrinter extends Printer {
     }
 }
 
-(function(VariableDeclarationKind) {
-    VariableDeclarationKind["Var"] = "var";
-    VariableDeclarationKind["Let"] = "let";
-    VariableDeclarationKind["Const"] = "const";
-})(exports.VariableDeclarationKind || (exports.VariableDeclarationKind = {}));
+const VariableDeclarationKind = {};
+VariableDeclarationKind["Var"] = "var";
+VariableDeclarationKind["Let"] = "let";
+VariableDeclarationKind["Const"] = "const";
 
 class VariableStatementStructurePrinter extends NodePrinter {
     constructor() {
@@ -11436,7 +11428,7 @@ class VariableStatementStructurePrinter extends NodePrinter {
         this.factory.forJSDoc().printDocs(writer, structure.docs);
         writer.hangingIndent(() => {
             this.factory.forModifierableNode().printText(writer, structure);
-            writer.write(`${structure.declarationKind || exports.VariableDeclarationKind.Let} `);
+            writer.write(`${structure.declarationKind || VariableDeclarationKind.Let} `);
             this.factory.forVariableDeclaration().printTexts(writer, structure.declarations);
             writer.write(";");
         });
@@ -12526,7 +12518,7 @@ function ScopeableNode(Base) {
             if (scope != null)
                 return scope;
             if (Node.isParameterDeclaration(this) && this.isReadonly())
-                return exports.Scope.Public;
+                return Scope.Public;
             return undefined;
         }
         setScope(scope) {
@@ -12558,24 +12550,24 @@ function ScopeableNode(Base) {
 function getScopeForNode(node) {
     const modifierFlags = node.getCombinedModifierFlags();
     if ((modifierFlags & ts$1.ModifierFlags.Private) !== 0)
-        return exports.Scope.Private;
+        return Scope.Private;
     else if ((modifierFlags & ts$1.ModifierFlags.Protected) !== 0)
-        return exports.Scope.Protected;
+        return Scope.Protected;
     else if ((modifierFlags & ts$1.ModifierFlags.Public) !== 0)
-        return exports.Scope.Public;
+        return Scope.Public;
     else
         return undefined;
 }
 function setScopeForNode(node, scope) {
-    node.toggleModifier("public", scope === exports.Scope.Public);
-    node.toggleModifier("protected", scope === exports.Scope.Protected);
-    node.toggleModifier("private", scope === exports.Scope.Private);
+    node.toggleModifier("public", scope === Scope.Public);
+    node.toggleModifier("protected", scope === Scope.Protected);
+    node.toggleModifier("private", scope === Scope.Private);
 }
 
 function ScopedNode(Base) {
     return class extends Base {
         getScope() {
-            return getScopeForNode(this) || exports.Scope.Public;
+            return getScopeForNode(this) || Scope.Public;
         }
         setScope(scope) {
             setScopeForNode(this, scope);
@@ -13625,7 +13617,7 @@ class PropertyAssignment extends PropertyAssignmentBase {
     getStructure() {
         const initializer = this.getInitializerOrThrow();
         const structure = callBaseGetStructure(PropertyAssignmentBase.prototype, this, {
-            kind: exports.StructureKind.PropertyAssignment,
+            kind: StructureKind.PropertyAssignment,
             initializer: initializer.getText(),
         });
         delete structure.hasQuestionToken;
@@ -13682,7 +13674,7 @@ class ShorthandPropertyAssignment extends ShorthandPropertyAssignmentBase {
     }
     getStructure() {
         const structure = callBaseGetStructure(ShorthandPropertyAssignmentBase.prototype, this, {
-            kind: exports.StructureKind.ShorthandPropertyAssignment,
+            kind: StructureKind.ShorthandPropertyAssignment,
         });
         delete structure.hasQuestionToken;
         return structure;
@@ -13697,7 +13689,7 @@ class SpreadAssignment extends SpreadAssignmentBase {
     }
     getStructure() {
         return callBaseGetStructure(SpreadAssignmentBase.prototype, this, {
-            kind: exports.StructureKind.SpreadAssignment,
+            kind: StructureKind.SpreadAssignment,
             expression: this.getExpression().getText(),
         });
     }
@@ -14430,7 +14422,7 @@ class ExportAssignment extends ExportAssignmentBase {
     }
     getStructure() {
         return callBaseGetStructure(Statement.prototype, this, {
-            kind: exports.StructureKind.ExportAssignment,
+            kind: StructureKind.ExportAssignment,
             expression: this.getExpression().getText(),
             isExportEquals: this.isExportEquals(),
         });
@@ -14554,7 +14546,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         if (moduleSpecifier == null)
             return this;
         if (!this.hasNamedExports())
-            throw new errors.InvalidOperationError(`Cannot remove the module specifier from an export declaration that has no named exports.`);
+            throw new errors.InvalidOperationError(`Cannot remove the module specifier from an export declaration that has no named `);
         removeChildren({
             children: [this.getFirstChildByKindOrThrow(ts$1.SyntaxKind.FromKeyword), moduleSpecifier],
             removePrecedingNewLines: true,
@@ -14673,7 +14665,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         var _a;
         const moduleSpecifier = this.getModuleSpecifier();
         return callBaseGetStructure(ExportDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.ExportDeclaration,
+            kind: StructureKind.ExportDeclaration,
             isTypeOnly: this.isTypeOnly(),
             moduleSpecifier: moduleSpecifier === null || moduleSpecifier === void 0 ? void 0 : moduleSpecifier.getLiteralText(),
             namedExports: this.getNamedExports().map(node => node.getStructure()),
@@ -14788,7 +14780,7 @@ class ExportSpecifier extends ExportSpecifierBase {
     remove() {
         const exportDeclaration = this.getExportDeclaration();
         const exports = exportDeclaration.getNamedExports();
-        if (exports.length > 1)
+        if (length > 1)
             removeCommaSeparatedChild(this);
         else if (exportDeclaration.hasModuleSpecifier())
             exportDeclaration.toNamespaceExport();
@@ -14808,7 +14800,7 @@ class ExportSpecifier extends ExportSpecifierBase {
     getStructure() {
         const alias = this.getAliasNode();
         return callBaseGetStructure(Node.prototype, this, {
-            kind: exports.StructureKind.ExportSpecifier,
+            kind: StructureKind.ExportSpecifier,
             alias: alias ? alias.getText() : undefined,
             name: this.getNameNode().getText(),
         });
@@ -15172,7 +15164,7 @@ class ImportDeclaration extends ImportDeclarationBase {
         const namespaceImport = this.getNamespaceImport();
         const defaultImport = this.getDefaultImport();
         return callBaseGetStructure(ImportDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.ImportDeclaration,
+            kind: StructureKind.ImportDeclaration,
             isTypeOnly: this.isTypeOnly(),
             defaultImport: defaultImport ? defaultImport.getText() : undefined,
             moduleSpecifier: this.getModuleSpecifier().getLiteralText(),
@@ -15349,7 +15341,7 @@ class ImportSpecifier extends ImportSpecifierBase {
     getStructure() {
         const alias = this.getAliasNode();
         return callBaseGetStructure(ImportSpecifierBase.prototype, this, {
-            kind: exports.StructureKind.ImportSpecifier,
+            kind: StructureKind.ImportSpecifier,
             name: this.getName(),
             alias: alias ? alias.getText() : undefined,
         });
@@ -15390,11 +15382,10 @@ function NamespaceChildableNode(Base) {
     };
 }
 
-(function(NamespaceDeclarationKind) {
-    NamespaceDeclarationKind["Namespace"] = "namespace";
-    NamespaceDeclarationKind["Module"] = "module";
-    NamespaceDeclarationKind["Global"] = "global";
-})(exports.NamespaceDeclarationKind || (exports.NamespaceDeclarationKind = {}));
+const NamespaceDeclarationKind = {};
+NamespaceDeclarationKind["Namespace"] = "namespace";
+NamespaceDeclarationKind["Module"] = "module";
+NamespaceDeclarationKind["Global"] = "global";
 
 const createBase$d = (ctor) => ModuledNode(UnwrappableNode(TextInsertableNode(BodiedNode(NamespaceChildableNode(StatementedNode(JSDocableNode(AmbientableNode(ExportableNode(ModifierableNode(NamedNode(ctor)))))))))));
 const NamespaceDeclarationBase = createBase$d(Statement);
@@ -15436,15 +15427,15 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
         return nodes;
     }
     hasNamespaceKeyword() {
-        return this.getDeclarationKind() === exports.NamespaceDeclarationKind.Namespace;
+        return this.getDeclarationKind() === NamespaceDeclarationKind.Namespace;
     }
     hasModuleKeyword() {
-        return this.getDeclarationKind() === exports.NamespaceDeclarationKind.Module;
+        return this.getDeclarationKind() === NamespaceDeclarationKind.Module;
     }
     setDeclarationKind(kind) {
         if (this.getDeclarationKind() === kind)
             return this;
-        if (kind === exports.NamespaceDeclarationKind.Global) {
+        if (kind === NamespaceDeclarationKind.Global) {
             const declarationKindKeyword = this.getDeclarationKindKeyword();
             this.getNameNode().replaceWithText("global");
             if (declarationKindKeyword != null) {
@@ -15472,8 +15463,8 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
     getDeclarationKind() {
         const declarationKeyword = this.getDeclarationKindKeyword();
         if (declarationKeyword == null)
-            return exports.NamespaceDeclarationKind.Global;
-        return declarationKeyword.getKind() === ts$1.SyntaxKind.NamespaceKeyword ? exports.NamespaceDeclarationKind.Namespace : exports.NamespaceDeclarationKind.Module;
+            return NamespaceDeclarationKind.Global;
+        return declarationKeyword.getKind() === ts$1.SyntaxKind.NamespaceKeyword ? NamespaceDeclarationKind.Namespace : NamespaceDeclarationKind.Module;
     }
     getDeclarationKindKeyword() {
         return this.getFirstChild(child => child.getKind() === ts$1.SyntaxKind.NamespaceKeyword
@@ -15489,7 +15480,7 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(NamespaceDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Namespace,
+            kind: StructureKind.Namespace,
             declarationKind: this.getDeclarationKind(),
         });
     }
@@ -15501,8 +15492,8 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
     }
 }
 function addNamespaceKeywordIfNecessary(namespaceDec) {
-    if (namespaceDec.getDeclarationKind() === exports.NamespaceDeclarationKind.Global)
-        namespaceDec.setDeclarationKind(exports.NamespaceDeclarationKind.Namespace);
+    if (namespaceDec.getDeclarationKind() === NamespaceDeclarationKind.Global)
+        namespaceDec.setDeclarationKind(NamespaceDeclarationKind.Namespace);
 }
 
 const NamespaceExportBase = RenameableNode(Node);
@@ -15548,11 +15539,10 @@ class FileReference extends TextRange {
     }
 }
 
-(function(FileSystemRefreshResult) {
-    FileSystemRefreshResult[FileSystemRefreshResult["NoChange"] = 0] = "NoChange";
-    FileSystemRefreshResult[FileSystemRefreshResult["Updated"] = 1] = "Updated";
-    FileSystemRefreshResult[FileSystemRefreshResult["Deleted"] = 2] = "Deleted";
-})(exports.FileSystemRefreshResult || (exports.FileSystemRefreshResult = {}));
+const FileSystemRefreshResult = {};
+FileSystemRefreshResult[FileSystemRefreshResult["NoChange"] = 0] = "NoChange";
+FileSystemRefreshResult[FileSystemRefreshResult["Updated"] = 1] = "Updated";
+FileSystemRefreshResult[FileSystemRefreshResult["Deleted"] = 2] = "Deleted";
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -16045,20 +16035,20 @@ class SourceFile extends SourceFileBase {
     }
     getStructure() {
         return callBaseGetStructure(SourceFileBase.prototype, this, {
-            kind: exports.StructureKind.SourceFile,
+            kind: StructureKind.SourceFile,
         });
     }
     _refreshFromFileSystemInternal(fileReadResult) {
         if (fileReadResult === false) {
             this.forget();
-            return exports.FileSystemRefreshResult.Deleted;
+            return FileSystemRefreshResult.Deleted;
         }
         const fileText = fileReadResult;
         if (fileText === this.getFullText())
-            return exports.FileSystemRefreshResult.NoChange;
+            return FileSystemRefreshResult.NoChange;
         this.replaceText([0, this.getEnd()], fileText);
         this._setIsSaved(true);
-        return exports.FileSystemRefreshResult.Updated;
+        return FileSystemRefreshResult.Updated;
     }
     _isInProject() {
         return this._context.inProjectCoordinator.isSourceFileInProject(this);
@@ -16128,7 +16118,7 @@ class VariableStatement extends VariableStatementBase {
     }
     getStructure() {
         return callBaseGetStructure(VariableStatementBase.prototype, this, {
-            kind: exports.StructureKind.VariableStatement,
+            kind: StructureKind.VariableStatement,
             declarationKind: this.getDeclarationKind(),
             declarations: this.getDeclarations().map(declaration => declaration.getStructure()),
         });
@@ -16279,14 +16269,14 @@ class FunctionDeclaration extends FunctionDeclarationBase {
                 return getOverloadSpecificStructure();
             return getSpecificStructure();
             function getOverloadSpecificStructure() {
-                return { kind: exports.StructureKind.FunctionOverload };
+                return { kind: StructureKind.FunctionOverload };
             }
             function getSpecificStructure() {
                 if (!hasImplementation)
-                    return { kind: exports.StructureKind.Function };
+                    return { kind: StructureKind.Function };
                 else {
                     return {
-                        kind: exports.StructureKind.Function,
+                        kind: StructureKind.Function,
                         overloads: thisNode.getOverloads().map(o => o.getStructure()),
                     };
                 }
@@ -16342,7 +16332,7 @@ class ParameterDeclaration extends ParameterDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(ParameterDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Parameter,
+            kind: StructureKind.Parameter,
             isRestParameter: this.isRestParameter(),
         });
     }
@@ -16448,14 +16438,14 @@ class MethodDeclaration extends MethodDeclarationBase {
                 return getOverloadSpecificStructure();
             return getSpecificStructure();
             function getOverloadSpecificStructure() {
-                return { kind: exports.StructureKind.MethodOverload };
+                return { kind: StructureKind.MethodOverload };
             }
             function getSpecificStructure() {
                 if (!hasImplementation)
-                    return { kind: exports.StructureKind.Method };
+                    return { kind: StructureKind.Method };
                 else {
                     return {
-                        kind: exports.StructureKind.Method,
+                        kind: StructureKind.Method,
                         overloads: thisNode.getOverloads().map(o => o.getStructure()),
                     };
                 }
@@ -16961,7 +16951,7 @@ class ClassDeclaration extends ClassDeclarationBase {
         const getExtends = this.getExtends();
         const isAmbient = this.isAmbient();
         return callBaseGetStructure(ClassDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Class,
+            kind: StructureKind.Class,
             ctors: this.getConstructors().filter(ctor => isAmbient || !ctor.isOverload()).map(ctor => ctor.getStructure()),
             methods: this.getMethods().filter(method => isAmbient || !method.isOverload()).map(method => method.getStructure()),
             properties: this.getProperties().map(property => property.getStructure()),
@@ -16973,9 +16963,9 @@ class ClassDeclaration extends ClassDeclarationBase {
     extractInterface(name) {
         const { constructors, properties, methods, accessors } = getExtractedClassDetails(this, false);
         const parameterProperties = ArrayUtils.flatten(constructors.map(c => c.getParameters().filter(p => p.isParameterProperty())))
-            .filter(p => p.getName() != null && p.getScope() === exports.Scope.Public);
+            .filter(p => p.getName() != null && p.getScope() === Scope.Public);
         return {
-            kind: exports.StructureKind.Interface,
+            kind: StructureKind.Interface,
             name: getDefaultExtractedName(name, this),
             docs: this.getJsDocs().map(d => d.getStructure()),
             typeParameters: this.getTypeParameters().map(p => p.getStructure()),
@@ -16986,8 +16976,8 @@ class ClassDeclaration extends ClassDeclarationBase {
                         .filter(t => t.getTagName() === "param" && t.getName() === p.getName() && t.getComment() != null)
                         .map(t => t.getComment().trim())[0];
                     return {
-                        kind: exports.StructureKind.PropertySignature,
-                        docs: jsDocComment == null ? [] : [{ kind: exports.StructureKind.JSDoc, description: jsDocComment }],
+                        kind: StructureKind.PropertySignature,
+                        docs: jsDocComment == null ? [] : [{ kind: StructureKind.JSDoc, description: jsDocComment }],
                         name: p.getName(),
                         type: p.getType().getText(p),
                         hasQuestionToken: p.hasQuestionToken(),
@@ -17004,7 +16994,7 @@ class ClassDeclaration extends ClassDeclarationBase {
         const { constructors, properties, methods, accessors } = getExtractedClassDetails(this, true);
         const instanceName = getDefaultExtractedName(undefined, this);
         return {
-            kind: exports.StructureKind.Interface,
+            kind: StructureKind.Interface,
             name,
             properties: [
                 ...properties.map(getExtractedInterfacePropertyStructure),
@@ -17012,7 +17002,7 @@ class ClassDeclaration extends ClassDeclarationBase {
             ],
             methods: methods.map(getExtractedInterfaceMethodStructure),
             constructSignatures: constructors.map(c => ({
-                kind: exports.StructureKind.ConstructSignature,
+                kind: StructureKind.ConstructSignature,
                 docs: c.getJsDocs().map(d => d.getStructure()),
                 parameters: c.getParameters().map(p => (Object.assign(Object.assign({}, getExtractedInterfaceParameterStructure(p)), { scope: undefined, isReadonly: false }))),
                 returnType: instanceName,
@@ -17022,15 +17012,15 @@ class ClassDeclaration extends ClassDeclarationBase {
 }
 function getExtractedClassDetails(classDec, isStatic) {
     const constructors = ArrayUtils.flatten(classDec.getConstructors().map(c => c.getOverloads().length > 0 ? c.getOverloads() : [c]));
-    const properties = classDec.getProperties().filter(p => p.isStatic() === isStatic && p.getScope() === exports.Scope.Public);
+    const properties = classDec.getProperties().filter(p => p.isStatic() === isStatic && p.getScope() === Scope.Public);
     const methods = ArrayUtils.flatten(classDec.getMethods()
-        .filter(p => p.isStatic() === isStatic && p.getScope() === exports.Scope.Public)
+        .filter(p => p.isStatic() === isStatic && p.getScope() === Scope.Public)
         .map(m => m.getOverloads().length > 0 ? m.getOverloads() : [m]));
     return { constructors, properties, methods, accessors: getAccessors() };
     function getAccessors() {
         const result = new KeyValueCache();
         for (const accessor of [...classDec.getGetAccessors(), ...classDec.getSetAccessors()]) {
-            if (accessor.isStatic() === isStatic && accessor.getScope() === exports.Scope.Public)
+            if (accessor.isStatic() === isStatic && accessor.getScope() === Scope.Public)
                 result.getOrCreate(accessor.getName(), () => []).push(accessor);
         }
         return result.getValuesAsArray();
@@ -17042,7 +17032,7 @@ function getDefaultExtractedName(name, classDec) {
 }
 function getExtractedInterfacePropertyStructure(prop) {
     return {
-        kind: exports.StructureKind.PropertySignature,
+        kind: StructureKind.PropertySignature,
         docs: prop.getJsDocs().map(d => d.getStructure()),
         name: prop.getName(),
         type: prop.getType().getText(prop),
@@ -17052,7 +17042,7 @@ function getExtractedInterfacePropertyStructure(prop) {
 }
 function getExtractedInterfaceAccessorStructure(getAndSet) {
     return {
-        kind: exports.StructureKind.PropertySignature,
+        kind: StructureKind.PropertySignature,
         docs: getAndSet[0].getJsDocs().map(d => d.getStructure()),
         name: getAndSet[0].getName(),
         type: getAndSet[0].getType().getText(getAndSet[0]),
@@ -17062,7 +17052,7 @@ function getExtractedInterfaceAccessorStructure(getAndSet) {
 }
 function getExtractedInterfaceMethodStructure(method) {
     return {
-        kind: exports.StructureKind.MethodSignature,
+        kind: StructureKind.MethodSignature,
         docs: method.getJsDocs().map(d => d.getStructure()),
         name: method.getName(),
         hasQuestionToken: method.hasQuestionToken(),
@@ -17126,14 +17116,14 @@ class ConstructorDeclaration extends ConstructorDeclarationBase {
                 return getSpecificOverloadStructure();
             return getSpecificStructure();
             function getSpecificOverloadStructure() {
-                return { kind: exports.StructureKind.ConstructorOverload };
+                return { kind: StructureKind.ConstructorOverload };
             }
             function getSpecificStructure() {
                 if (!hasImplementation)
-                    return { kind: exports.StructureKind.Constructor };
+                    return { kind: StructureKind.Constructor };
                 else {
                     return {
-                        kind: exports.StructureKind.Constructor,
+                        kind: StructureKind.Constructor,
                         overloads: thisNode.getOverloads().map(o => o.getStructure()),
                     };
                 }
@@ -17163,7 +17153,7 @@ class GetAccessorDeclaration extends GetAccessorDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(GetAccessorDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.GetAccessor,
+            kind: StructureKind.GetAccessor,
         });
     }
 }
@@ -17187,7 +17177,7 @@ class PropertyDeclaration extends PropertyDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(PropertyDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Property,
+            kind: StructureKind.Property,
         });
     }
 }
@@ -17213,7 +17203,7 @@ class SetAccessorDeclaration extends SetAccessorDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(SetAccessorDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.SetAccessor,
+            kind: StructureKind.SetAccessor,
         });
     }
 }
@@ -17381,7 +17371,7 @@ class Decorator extends DecoratorBase {
     getStructure() {
         const isDecoratorFactory = this.isDecoratorFactory();
         return callBaseGetStructure(DecoratorBase.prototype, this, {
-            kind: exports.StructureKind.Decorator,
+            kind: StructureKind.Decorator,
             name: this.getName(),
             arguments: isDecoratorFactory ? this.getArguments().map(arg => arg.getText()) : undefined,
             typeArguments: isDecoratorFactory ? this.getTypeArguments().map(arg => arg.getText()) : undefined,
@@ -17586,7 +17576,7 @@ class JSDoc extends JSDocBase {
     }
     getStructure() {
         return callBaseGetStructure(JSDocBase.prototype, this, {
-            kind: exports.StructureKind.JSDoc,
+            kind: StructureKind.JSDoc,
             description: this.getDescription(),
             tags: this.getTags().map(t => t.getStructure()),
         });
@@ -17660,7 +17650,7 @@ class JSDocTag extends JSDocTagBase {
     getStructure() {
         const text = getText(this);
         return callBaseGetStructure(JSDocTagBase.prototype, this, {
-            kind: exports.StructureKind.JSDocTag,
+            kind: StructureKind.JSDocTag,
             tagName: this.getTagName(),
             text: text.length === 0 ? undefined : text,
         });
@@ -17837,7 +17827,7 @@ class TypeAliasDeclaration extends TypeAliasDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(TypeAliasDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.TypeAlias,
+            kind: StructureKind.TypeAlias,
             type: this.getTypeNodeOrThrow().getText(),
         });
     }
@@ -17939,7 +17929,7 @@ class TypeParameterDeclaration extends TypeParameterDeclarationBase {
         const constraintNode = this.getConstraint();
         const defaultNode = this.getDefault();
         return callBaseGetStructure(TypeParameterDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.TypeParameter,
+            kind: StructureKind.TypeParameter,
             constraint: constraintNode != null ? constraintNode.getText({ trimLeadingIndentation: true }) : undefined,
             default: defaultNode ? defaultNode.getText({ trimLeadingIndentation: true }) : undefined,
         });
@@ -18158,7 +18148,7 @@ class EnumDeclaration extends EnumDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(EnumDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Enum,
+            kind: StructureKind.Enum,
             isConst: this.isConstEnum(),
             members: this.getMembers().map(member => member.getStructure()),
         });
@@ -18203,7 +18193,7 @@ class EnumMember extends EnumMemberBase {
     }
     getStructure() {
         return callBaseGetStructure(EnumMemberBase.prototype, this, {
-            kind: exports.StructureKind.EnumMember,
+            kind: StructureKind.EnumMember,
             value: undefined,
         });
     }
@@ -18252,7 +18242,7 @@ class CallSignatureDeclaration extends CallSignatureDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(CallSignatureDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.CallSignature,
+            kind: StructureKind.CallSignature,
         });
     }
 }
@@ -18269,7 +18259,7 @@ class ConstructSignatureDeclaration extends ConstructSignatureDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(ConstructSignatureDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.ConstructSignature,
+            kind: StructureKind.ConstructSignature,
         });
     }
 }
@@ -18316,7 +18306,7 @@ class IndexSignatureDeclaration extends IndexSignatureDeclarationBase {
     getStructure() {
         const keyTypeNode = this.getKeyTypeNode();
         return callBaseGetStructure(IndexSignatureDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.IndexSignature,
+            kind: StructureKind.IndexSignature,
             keyName: this.getKeyName(),
             keyType: keyTypeNode.getText(),
         });
@@ -18344,7 +18334,7 @@ class InterfaceDeclaration extends InterfaceDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(InterfaceDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.Interface,
+            kind: StructureKind.Interface,
         });
     }
 }
@@ -18358,7 +18348,7 @@ class MethodSignature extends MethodSignatureBase {
     }
     getStructure() {
         return callBaseGetStructure(MethodSignatureBase.prototype, this, {
-            kind: exports.StructureKind.MethodSignature,
+            kind: StructureKind.MethodSignature,
         });
     }
 }
@@ -18372,7 +18362,7 @@ class PropertySignature extends PropertySignatureBase {
     }
     getStructure() {
         return callBaseGetStructure(PropertySignatureBase.prototype, this, {
-            kind: exports.StructureKind.PropertySignature,
+            kind: StructureKind.PropertySignature,
         });
     }
 }
@@ -18503,7 +18493,7 @@ class JsxAttribute extends JsxAttributeBase {
     getStructure() {
         const initializer = this.getInitializer();
         return callBaseGetStructure(JsxAttributeBase.prototype, this, {
-            kind: exports.StructureKind.JsxAttribute,
+            kind: StructureKind.JsxAttribute,
             initializer: initializer === null || initializer === void 0 ? void 0 : initializer.getText(),
         });
     }
@@ -18565,7 +18555,7 @@ class JsxElement extends JsxElementBase {
     getStructure() {
         const openingElement = this.getOpeningElement();
         const structure = callBaseGetStructure(JsxElementBase.prototype, this, {
-            kind: exports.StructureKind.JsxElement,
+            kind: StructureKind.JsxElement,
             name: openingElement.getTagNameNode().getText(),
             attributes: openingElement.getAttributes().map(a => a.getStructure()),
             children: undefined,
@@ -18632,7 +18622,7 @@ class JsxSelfClosingElement extends JsxSelfClosingElementBase {
     }
     getStructure() {
         return callBaseGetStructure(JsxSelfClosingElementBase.prototype, this, {
-            kind: exports.StructureKind.JsxSelfClosingElement,
+            kind: StructureKind.JsxSelfClosingElement,
         });
     }
 }
@@ -18661,7 +18651,7 @@ class JsxSpreadAttribute extends JsxSpreadAttributeBase {
     }
     getStructure() {
         return callBaseGetStructure(JsxSpreadAttributeBase.prototype, this, {
-            kind: exports.StructureKind.JsxSpreadAttribute,
+            kind: StructureKind.JsxSpreadAttribute,
             expression: this.getExpression().getText(),
         });
     }
@@ -18737,10 +18727,9 @@ class NumericLiteral extends NumericLiteralBase {
     }
 }
 
-(function(QuoteKind) {
-    QuoteKind["Single"] = "'";
-    QuoteKind["Double"] = "\"";
-})(exports.QuoteKind || (exports.QuoteKind = {}));
+const QuoteKind = {};
+QuoteKind["Single"] = "'";
+QuoteKind["Double"] = "\"";
 
 const RegularExpressionLiteralBase = LiteralExpression;
 class RegularExpressionLiteral extends RegularExpressionLiteralBase {
@@ -18783,7 +18772,7 @@ class StringLiteral extends StringLiteralBase {
         return this;
     }
     getQuoteKind() {
-        return this.getText()[0] === "'" ? exports.QuoteKind.Single : exports.QuoteKind.Double;
+        return this.getText()[0] === "'" ? QuoteKind.Single : QuoteKind.Double;
     }
 }
 
@@ -18959,7 +18948,7 @@ class VariableDeclaration extends VariableDeclarationBase {
     }
     getStructure() {
         return callBaseGetStructure(VariableDeclarationBase.prototype, this, {
-            kind: exports.StructureKind.VariableDeclaration,
+            kind: StructureKind.VariableDeclaration,
         });
     }
 }
@@ -18972,20 +18961,20 @@ class VariableDeclarationList extends VariableDeclarationListBase {
     getDeclarationKind() {
         const nodeFlags = this.compilerNode.flags;
         if (nodeFlags & ts$1.NodeFlags.Let)
-            return exports.VariableDeclarationKind.Let;
+            return VariableDeclarationKind.Let;
         else if (nodeFlags & ts$1.NodeFlags.Const)
-            return exports.VariableDeclarationKind.Const;
+            return VariableDeclarationKind.Const;
         else
-            return exports.VariableDeclarationKind.Var;
+            return VariableDeclarationKind.Var;
     }
     getDeclarationKindKeyword() {
         const declarationKind = this.getDeclarationKind();
         switch (declarationKind) {
-            case exports.VariableDeclarationKind.Const:
+            case VariableDeclarationKind.Const:
                 return this.getFirstChildByKindOrThrow(ts$1.SyntaxKind.ConstKeyword);
-            case exports.VariableDeclarationKind.Let:
+            case VariableDeclarationKind.Let:
                 return this.getFirstChildByKindOrThrow(ts$1.SyntaxKind.LetKeyword);
-            case exports.VariableDeclarationKind.Var:
+            case VariableDeclarationKind.Var:
                 return this.getFirstChildByKindOrThrow(ts$1.SyntaxKind.VarKeyword);
             default:
                 return errors.throwNotImplementedForNeverValueError(declarationKind);
@@ -19117,13 +19106,13 @@ class Symbol$1 {
     getExport(name) {
         if (this.compilerSymbol.exports == null)
             return undefined;
-        const tsSymbol = this.compilerSymbol.exports.get(ts$1.escapeLeadingUnderscores(name));
+        const tsSymbol = this.compilerSymbol.get(ts$1.escapeLeadingUnderscores(name));
         return tsSymbol == null ? undefined : this._context.compilerFactory.getSymbol(tsSymbol);
     }
     getExports() {
         if (this.compilerSymbol.exports == null)
             return [];
-        return ArrayUtils.from(this.compilerSymbol.exports.values()).map(symbol => this._context.compilerFactory.getSymbol(symbol));
+        return ArrayUtils.from(this.compilerSymbol.values()).map(symbol => this._context.compilerFactory.getSymbol(symbol));
     }
     getGlobalExportOrThrow(name) {
         return errors.throwIfNullOrUndefined(this.getGlobalExport(name), `Expected to find global export with name: ${name}`);
@@ -22086,9 +22075,9 @@ class ProjectContext {
         const indentationText = this.manipulationSettings.getIndentationText();
         return new CodeBlockWriter({
             newLine: this.manipulationSettings.getNewLineKindAsString(),
-            indentNumberOfSpaces: indentationText === exports.IndentationText.Tab ? undefined : indentationText.length,
-            useTabs: indentationText === exports.IndentationText.Tab,
-            useSingleQuote: this.manipulationSettings.getQuoteKind() === exports.QuoteKind.Single,
+            indentNumberOfSpaces: indentationText === IndentationText.Tab ? undefined : indentationText.length,
+            useTabs: indentationText === IndentationText.Tab,
+            useSingleQuote: this.manipulationSettings.getQuoteKind() === QuoteKind.Single,
         });
     }
     getPreEmitDiagnostics(sourceFile) {

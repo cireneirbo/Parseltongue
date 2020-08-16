@@ -34,6 +34,7 @@
     "eslint": "latest",
     "mocha": "latest",
     "rollup": "latest",
+    "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-typescript2": "latest",
     "tslib": "latest"
   }

@@ -9,15 +9,13 @@ const project = new Project({
 		"alwaysStrict": true,
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
-		// @ts-ignore
 		"moduleResolution": "Node",
-		// @ts-ignore
 		"target": "ES2015",
 		"preserveConstEnums": true
 	}
 });
 
-export function compile(input) {
+globalThis.compile = function(input) {
 	// Normalize whitespace
 	input = input.replace(/^\t+/gm, function(match) {
 		return " ".repeat(match.length * 4);

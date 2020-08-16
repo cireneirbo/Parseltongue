@@ -4,7 +4,7 @@ import * as path from "path";
 import { Project } from "ts-morph";
 
 // Example usage:
-//  npx ts-node ./compiler.ts input/twoPlusTwo.ps
+//  npx ts-node ./compiler.ts input/twoPlusTwo.pt
 
 const project = new Project({
 	"addFilesFromTsConfig": false,
@@ -17,7 +17,7 @@ export function compile(input) {
 		return " ".repeat(match.length * 4);
 	}).replace(/[ \t]+$/gm, "");
 
-	const sourceFile = project.createSourceFile("input.ts", input);
+	const sourceFile = project.createSourceFile("input.ts", input, { "overwrite": true });
 
 	for (const transform of fs.readdirSync(path.join(__dirname, "transforms"))) {
 		const transformFunction = require(path.join(__dirname, "transforms", transform))["default"];

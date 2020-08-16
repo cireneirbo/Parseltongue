@@ -1,10 +1,10 @@
-import { SourceFile, SyntaxKind } from "ts-morph";
+import { SyntaxKind } from "../lib/typescript/SyntaxKind";
 
 function getIndentationWidth(text) {
 	return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
 
-export default function(sourceFile: SourceFile) {
+export default function(sourceFile) {
 	sourceFile.forEachDescendant(function(node) {
 		switch (node.getKind()) {
 			case SyntaxKind.DoStatement:
@@ -20,7 +20,6 @@ export default function(sourceFile: SourceFile) {
 
 					node.replaceWithText(newNodeText.replace(/ and /g, " && ").replace(/ or /g, " || "));
 
-					// @ts-ignore
 					node.getNextSibling().remove();
 				}
 

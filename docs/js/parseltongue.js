@@ -1,5 +1,6 @@
-var common = require('@ts-morph/common');
-var CodeBlockWriter = require('code-block-writer');
+const { ts } = globalThis;
+
+const exports = {};
 
 class AdvancedIterator {
     constructor(iterator) {
@@ -89,7 +90,7 @@ function getNotFoundErrorMessageForNameOrFindFunction(findName, nameOrFindFuncti
 }
 
 function getParentSyntaxList(node, sourceFile) {
-    if (node.kind === common.SyntaxKind.EndOfFileToken)
+    if (node.kind === ts.SyntaxKind.EndOfFileToken)
         return undefined;
     const parent = node.parent;
     if (parent == null)
@@ -98,7 +99,7 @@ function getParentSyntaxList(node, sourceFile) {
     for (const child of parent.getChildren(sourceFile)) {
         if (child.pos > end || child === node)
             return undefined;
-        if (child.kind === common.SyntaxKind.SyntaxList && child.pos <= pos && child.end >= end)
+        if (child.kind === ts.SyntaxKind.SyntaxList && child.pos <= pos && child.end >= end)
             return child;
     }
     return undefined;
@@ -123,17 +124,17 @@ function isNodeAmbientOrInAmbientContext(node) {
     return false;
 }
 function checkNodeIsAmbient(node) {
-    const isThisAmbient = (node.getCombinedModifierFlags() & common.ts.ModifierFlags.Ambient) === common.ts.ModifierFlags.Ambient;
+    const isThisAmbient = (node.getCombinedModifierFlags() & ts.ModifierFlags.Ambient) === ts.ModifierFlags.Ambient;
     return isThisAmbient || Node.isInterfaceDeclaration(node) || Node.isTypeAliasDeclaration(node);
 }
 
 function isStringKind(kind) {
     switch (kind) {
-        case common.SyntaxKind.StringLiteral:
-        case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-        case common.SyntaxKind.TemplateHead:
-        case common.SyntaxKind.TemplateMiddle:
-        case common.SyntaxKind.TemplateTail:
+        case ts.SyntaxKind.StringLiteral:
+        case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+        case ts.SyntaxKind.TemplateHead:
+        case ts.SyntaxKind.TemplateMiddle:
+        case ts.SyntaxKind.TemplateTail:
             return true;
         default:
             return false;
@@ -149,7 +150,7 @@ class ModuleUtils {
     }
     static getReferencedSourceFileFromSymbol(symbol) {
         const declarations = symbol.getDeclarations();
-        if (declarations.length === 0 || declarations[0].getKind() !== common.SyntaxKind.SourceFile)
+        if (declarations.length === 0 || declarations[0].getKind() !== ts.SyntaxKind.SourceFile)
             return undefined;
         return declarations[0];
     }
@@ -157,10 +158,10 @@ class ModuleUtils {
 
 function printNode(node, sourceFileOrOptions, secondOverloadOptions) {
     var _a, _b;
-    const isFirstOverload = sourceFileOrOptions == null || sourceFileOrOptions.kind !== common.SyntaxKind.SourceFile;
+    const isFirstOverload = sourceFileOrOptions == null || sourceFileOrOptions.kind !== ts.SyntaxKind.SourceFile;
     const options = getOptions();
     const sourceFile = getSourceFile();
-    const printer = common.ts.createPrinter({
+    const printer = ts.createPrinter({
         newLine: (_a = options.newLineKind) !== null && _a !== void 0 ? _a : common.NewLineKind.LineFeed,
         removeComments: options.removeComments || false,
     });
@@ -170,12 +171,12 @@ function printNode(node, sourceFileOrOptions, secondOverloadOptions) {
         return printer.printNode((_b = options.emitHint) !== null && _b !== void 0 ? _b : common.EmitHint.Unspecified, node, sourceFile);
     function getSourceFile() {
         if (isFirstOverload) {
-            if (node.kind === common.SyntaxKind.SourceFile)
+            if (node.kind === ts.SyntaxKind.SourceFile)
                 return undefined;
             const topParent = getNodeSourceFile();
             if (topParent == null) {
                 const scriptKind = getScriptKind();
-                return common.ts.createSourceFile(`print.${getFileExt(scriptKind)}`, "", common.ScriptTarget.Latest, false, scriptKind);
+                return ts.createSourceFile(`print.${getFileExt(scriptKind)}`, "", common.ScriptTarget.Latest, false, scriptKind);
             }
             return topParent;
         }
@@ -207,7 +208,33 @@ function printNode(node, sourceFileOrOptions, secondOverloadOptions) {
     IndentationText["EightSpaces"] = "        ";
     IndentationText["Tab"] = "\t";
 })(exports.IndentationText || (exports.IndentationText = {}));
-class ManipulationSettingsContainer extends common.SettingsContainer {
+class SettingsContainer {
+    constructor(defaultSettings) {
+        this._defaultSettings = ObjectUtils.assign({}, defaultSettings);
+        this._settings = defaultSettings;
+    }
+    reset() {
+        this._settings = ObjectUtils.assign({}, this._defaultSettings);
+        this._fireModified();
+    }
+    get() {
+        return ObjectUtils.assign({}, this._settings);
+    }
+    set(settings) {
+        ObjectUtils.assign(this._settings, settings);
+        this._fireModified();
+    }
+    onModified(action) {
+        if (this._modifiedEventContainer == null)
+            this._modifiedEventContainer = new EventContainer();
+        this._modifiedEventContainer.subscribe(action);
+    }
+    _fireModified() {
+        if (this._modifiedEventContainer != null)
+            this._modifiedEventContainer.fire(undefined);
+    }
+}
+class ManipulationSettingsContainer extends SettingsContainer {
     constructor() {
         super({
             indentationText: exports.IndentationText.FourSpaces,
@@ -289,7 +316,7 @@ function setValueIfUndefined(obj, propertyName, defaultValue) {
 function fillDefaultEditorSettings(settings, manipulationSettings) {
     setValueIfUndefined(settings, "convertTabsToSpaces", manipulationSettings.getIndentationText() !== exports.IndentationText.Tab);
     setValueIfUndefined(settings, "newLineCharacter", manipulationSettings.getNewLineKindAsString());
-    setValueIfUndefined(settings, "indentStyle", common.ts.IndentStyle.Smart);
+    setValueIfUndefined(settings, "indentStyle", ts.IndentStyle.Smart);
     setValueIfUndefined(settings, "indentSize", manipulationSettings.getIndentationText().length);
     setValueIfUndefined(settings, "tabSize", manipulationSettings.getIndentationText().length);
 }
@@ -494,8 +521,6 @@ class SourceFileReferenceContainer {
     }
 }
 
-const [tsMajor, tsMinor, tsPatch] = common.ts.version.split(".").map(v => parseInt(v, 10));
-
 class WriterUtils {
     constructor() {
     }
@@ -539,7 +564,7 @@ function AmbientableNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getDeclareKeyword(), "Expected to find a declare keyword.");
         }
         getDeclareKeyword() {
-            return this.getFirstModifierByKind(common.SyntaxKind.DeclareKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.DeclareKeyword);
         }
         isAmbient() {
             return isNodeAmbientOrInAmbientContext(this);
@@ -683,7 +708,7 @@ function getNewInsertCode(opts) {
     }
 }
 
-const scanner = common.ts.createScanner(common.ts.ScriptTarget.Latest, true);
+const scanner = ts.createScanner(ts.ScriptTarget.Latest, true);
 function appendCommaToText(text) {
     const pos = getAppendCommaPos(text);
     if (pos === -1)
@@ -693,9 +718,9 @@ function appendCommaToText(text) {
 function getAppendCommaPos(text) {
     scanner.setText(text);
     try {
-        if (scanner.scan() === common.ts.SyntaxKind.EndOfFileToken)
+        if (scanner.scan() === ts.SyntaxKind.EndOfFileToken)
             return -1;
-        while (scanner.scan() !== common.ts.SyntaxKind.EndOfFileToken) {
+        while (scanner.scan() !== ts.SyntaxKind.EndOfFileToken) {
         }
         const pos = scanner.getStartPos();
         return text[pos - 1] === "," ? -1 : pos;
@@ -790,14 +815,14 @@ function getInsertPosFromIndex(index, syntaxList, children) {
         if (Node.isSourceFile(parent))
             return 0;
         else if (Node.isCaseClause(parent) || Node.isDefaultClause(parent)) {
-            const colonToken = parent.getFirstChildByKindOrThrow(common.SyntaxKind.ColonToken);
+            const colonToken = parent.getFirstChildByKindOrThrow(ts.SyntaxKind.ColonToken);
             return colonToken.getEnd();
         }
         const isInline = syntaxList !== parent.getChildSyntaxList();
         if (isInline)
             return syntaxList.getStart();
         const parentContainer = getParentContainer(parent);
-        const openBraceToken = parentContainer.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBraceToken);
+        const openBraceToken = parentContainer.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBraceToken);
         return openBraceToken.getEnd();
     }
     else {
@@ -813,7 +838,7 @@ function getEndPosFromIndex(index, parent, children, fullText) {
             endPos = parent.getEnd();
         else {
             const parentContainer = getParentContainer(parent);
-            const closeBraceToken = parentContainer.getLastChildByKind(common.SyntaxKind.CloseBraceToken);
+            const closeBraceToken = parentContainer.getLastChildByKind(ts.SyntaxKind.CloseBraceToken);
             if (closeBraceToken == null)
                 endPos = parent.getEnd();
             else
@@ -883,7 +908,7 @@ function getRangeWithoutCommentsFromArray(array, index, length, expectedKind) {
     while (index < array.length && children.length < length) {
         const child = array[index];
         const childKind = child.getKind();
-        if (childKind !== common.SyntaxKind.SingleLineCommentTrivia && childKind !== common.SyntaxKind.MultiLineCommentTrivia) {
+        if (childKind !== ts.SyntaxKind.SingleLineCommentTrivia && childKind !== ts.SyntaxKind.MultiLineCommentTrivia) {
             if (childKind !== expectedKind) {
                 throw new common.errors.NotImplementedError(`Unexpected! Inserting syntax kind of ${common.getSyntaxKindName(expectedKind)}`
                     + `, but ${child.getKindName()} was inserted.`);
@@ -941,7 +966,7 @@ class CompilerCommentNode {
         this.pos = pos;
         this.end = end;
         this.kind = kind;
-        this.flags = common.ts.NodeFlags.None;
+        this.flags = ts.NodeFlags.None;
         this.parent = parent;
     }
     getSourceFile() {
@@ -1029,17 +1054,17 @@ var CommentKind;
 })(CommentKind || (CommentKind = {}));
 const childrenSaver = new WeakMap();
 const commentNodeParserKinds = new Set([
-    common.SyntaxKind.SourceFile,
-    common.SyntaxKind.Block,
-    common.SyntaxKind.ModuleBlock,
-    common.SyntaxKind.CaseClause,
-    common.SyntaxKind.DefaultClause,
-    common.SyntaxKind.ClassDeclaration,
-    common.SyntaxKind.InterfaceDeclaration,
-    common.SyntaxKind.EnumDeclaration,
-    common.SyntaxKind.ClassExpression,
-    common.SyntaxKind.TypeLiteral,
-    common.SyntaxKind.ObjectLiteralExpression,
+    ts.SyntaxKind.SourceFile,
+    ts.SyntaxKind.Block,
+    ts.SyntaxKind.ModuleBlock,
+    ts.SyntaxKind.CaseClause,
+    ts.SyntaxKind.DefaultClause,
+    ts.SyntaxKind.ClassDeclaration,
+    ts.SyntaxKind.InterfaceDeclaration,
+    ts.SyntaxKind.EnumDeclaration,
+    ts.SyntaxKind.ClassExpression,
+    ts.SyntaxKind.TypeLiteral,
+    ts.SyntaxKind.ObjectLiteralExpression,
 ]);
 class CommentNodeParser {
     constructor() {
@@ -1079,20 +1104,20 @@ class CommentNodeParser {
         return node._commentKind === exports.CommentNodeKind.EnumMember;
     }
     static getContainerBodyPos(container, sourceFile) {
-        if (common.ts.isSourceFile(container))
+        if (ts.isSourceFile(container))
             return 0;
-        if (common.ts.isClassDeclaration(container)
-            || common.ts.isEnumDeclaration(container)
-            || common.ts.isInterfaceDeclaration(container)
-            || common.ts.isTypeLiteralNode(container)
-            || common.ts.isClassExpression(container)
-            || common.ts.isBlock(container)
-            || common.ts.isModuleBlock(container)
-            || common.ts.isObjectLiteralExpression(container)) {
-            return getTokenEnd(container, common.SyntaxKind.OpenBraceToken);
+        if (ts.isClassDeclaration(container)
+            || ts.isEnumDeclaration(container)
+            || ts.isInterfaceDeclaration(container)
+            || ts.isTypeLiteralNode(container)
+            || ts.isClassExpression(container)
+            || ts.isBlock(container)
+            || ts.isModuleBlock(container)
+            || ts.isObjectLiteralExpression(container)) {
+            return getTokenEnd(container, ts.SyntaxKind.OpenBraceToken);
         }
-        if (common.ts.isCaseClause(container) || common.ts.isDefaultClause(container))
-            return getTokenEnd(container, common.SyntaxKind.ColonToken);
+        if (ts.isCaseClause(container) || ts.isDefaultClause(container))
+            return getTokenEnd(container, ts.SyntaxKind.ColonToken);
         return common.errors.throwNotImplementedForNeverValueError(container);
         function getTokenEnd(node, kind) {
             var _a;
@@ -1134,7 +1159,7 @@ function* getNodes(container, sourceFile) {
                 const commentKind = getCommentKind();
                 if (commentKind != null) {
                     const comment = parseForComment(commentKind);
-                    if (comment.kind === common.SyntaxKind.SingleLineCommentTrivia)
+                    if (comment.kind === ts.SyntaxKind.SingleLineCommentTrivia)
                         return;
                     else
                         lineEnd = common.StringUtils.getLineEndFromPos(sourceFileText, pos);
@@ -1186,7 +1211,7 @@ function* getNodes(container, sourceFile) {
             const start = pos;
             skipSingleLineComment();
             const end = pos;
-            return createComment(fullStart, start, end, common.SyntaxKind.SingleLineCommentTrivia);
+            return createComment(fullStart, start, end, ts.SyntaxKind.SingleLineCommentTrivia);
         }
         function skipSingleLineComment() {
             pos += 2;
@@ -1197,7 +1222,7 @@ function* getNodes(container, sourceFile) {
             const start = pos;
             skipSlashStarComment(isJsDoc);
             const end = pos;
-            return createComment(fullStart, start, end, common.SyntaxKind.MultiLineCommentTrivia);
+            return createComment(fullStart, start, end, ts.SyntaxKind.MultiLineCommentTrivia);
         }
         function skipSlashStarComment(isJsDoc) {
             pos += isJsDoc ? 3 : 2;
@@ -1211,17 +1236,17 @@ function* getNodes(container, sourceFile) {
         }
     }
     function getContainerChildren() {
-        if (common.ts.isSourceFile(container) || common.ts.isBlock(container) || common.ts.isModuleBlock(container) || common.ts.isCaseClause(container) || common.ts.isDefaultClause(container))
+        if (ts.isSourceFile(container) || ts.isBlock(container) || ts.isModuleBlock(container) || ts.isCaseClause(container) || ts.isDefaultClause(container))
             return container.statements;
-        if (common.ts.isClassDeclaration(container)
-            || common.ts.isClassExpression(container)
-            || common.ts.isEnumDeclaration(container)
-            || common.ts.isInterfaceDeclaration(container)
-            || common.ts.isTypeLiteralNode(container)
-            || common.ts.isClassExpression(container)) {
+        if (ts.isClassDeclaration(container)
+            || ts.isClassExpression(container)
+            || ts.isEnumDeclaration(container)
+            || ts.isInterfaceDeclaration(container)
+            || ts.isTypeLiteralNode(container)
+            || ts.isClassExpression(container)) {
             return container.members;
         }
-        if (common.ts.isObjectLiteralExpression(container))
+        if (ts.isObjectLiteralExpression(container))
             return container.properties;
         return common.errors.throwNotImplementedForNeverValueError(container);
     }
@@ -1231,30 +1256,30 @@ function* getNodes(container, sourceFile) {
         function getCtor() {
             if (isStatementContainerNode(container))
                 return CompilerCommentStatement;
-            if (common.ts.isClassLike(container))
+            if (ts.isClassLike(container))
                 return CompilerCommentClassElement;
-            if (common.ts.isInterfaceDeclaration(container) || common.ts.isTypeLiteralNode(container))
+            if (ts.isInterfaceDeclaration(container) || ts.isTypeLiteralNode(container))
                 return CompilerCommentTypeElement;
-            if (common.ts.isObjectLiteralExpression(container))
+            if (ts.isObjectLiteralExpression(container))
                 return CompilerCommentObjectLiteralElement;
-            if (common.ts.isEnumDeclaration(container))
+            if (ts.isEnumDeclaration(container))
                 return CompilerCommentEnumMember;
             throw new common.errors.NotImplementedError(`Not implemented comment node container type: ${common.getSyntaxKindName(container.kind)}`);
         }
     }
 }
 function isSyntaxList(node) {
-    return node.kind === common.SyntaxKind.SyntaxList;
+    return node.kind === ts.SyntaxKind.SyntaxList;
 }
 function isStatementContainerNode(node) {
     return getStatementContainerNode() != null;
     function getStatementContainerNode() {
         const container = node;
-        if (common.ts.isSourceFile(container)
-            || common.ts.isBlock(container)
-            || common.ts.isModuleBlock(container)
-            || common.ts.isCaseClause(container)
-            || common.ts.isDefaultClause(container)) {
+        if (ts.isSourceFile(container)
+            || ts.isBlock(container)
+            || ts.isModuleBlock(container)
+            || ts.isCaseClause(container)
+            || ts.isDefaultClause(container)) {
             return container;
         }
         return undefined;
@@ -1307,7 +1332,7 @@ class ExtendedParser {
         }
         return node.getChildren(sourceFile);
         function isStatementMemberOrPropertyHoldingSyntaxList() {
-            if (node.kind !== common.ts.SyntaxKind.SyntaxList)
+            if (node.kind !== ts.SyntaxKind.SyntaxList)
                 return false;
             const parent = node.parent;
             if (!CommentNodeParser.shouldParseChildren(parent))
@@ -1319,7 +1344,7 @@ class ExtendedParser {
 function mergeInComments(nodes, otherNodes) {
     let currentIndex = 0;
     for (const child of otherNodes) {
-        if (child.kind !== common.SyntaxKind.SingleLineCommentTrivia && child.kind !== common.SyntaxKind.MultiLineCommentTrivia)
+        if (child.kind !== ts.SyntaxKind.SingleLineCommentTrivia && child.kind !== ts.SyntaxKind.MultiLineCommentTrivia)
             continue;
         while (currentIndex < nodes.length && nodes[currentIndex].end < child.end)
             currentIndex++;
@@ -1329,8 +1354,8 @@ function mergeInComments(nodes, otherNodes) {
 }
 
 function isComment(node) {
-    return node.kind === common.ts.SyntaxKind.SingleLineCommentTrivia
-        || node.kind === common.ts.SyntaxKind.MultiLineCommentTrivia;
+    return node.kind === ts.SyntaxKind.SingleLineCommentTrivia
+        || node.kind === ts.SyntaxKind.MultiLineCommentTrivia;
 }
 
 class NodeHandlerHelper {
@@ -1340,7 +1365,7 @@ class NodeHandlerHelper {
     handleForValues(handler, currentNode, newNode, newSourceFile) {
         if (this.compilerFactory.hasCompilerNode(currentNode))
             handler.handleNode(this.compilerFactory.getExistingNodeFromCompilerNode(currentNode), newNode, newSourceFile);
-        else if (currentNode.kind === common.SyntaxKind.SyntaxList) {
+        else if (currentNode.kind === ts.SyntaxKind.SyntaxList) {
             const sourceFile = this.compilerFactory.getExistingNodeFromCompilerNode(currentNode.getSourceFile());
             handler.handleNode(this.compilerFactory.getNodeFromCompilerNode(currentNode, sourceFile), newNode, newSourceFile);
         }
@@ -1603,7 +1628,7 @@ class RenameNodeHandler extends StraightReplacementNodeHandler {
     handleNode(currentNode, newNode, newSourceFile) {
         const currentNodeKind = currentNode.getKind();
         const newNodeKind = newNode.kind;
-        if (currentNodeKind === common.SyntaxKind.ShorthandPropertyAssignment && newNodeKind === common.SyntaxKind.PropertyAssignment) {
+        if (currentNodeKind === ts.SyntaxKind.ShorthandPropertyAssignment && newNodeKind === ts.SyntaxKind.PropertyAssignment) {
             const currentSourceFile = currentNode.getSourceFile();
             const currentIdentifier = currentNode.getNameNode();
             const newIdentifier = newNode.initializer;
@@ -1612,12 +1637,12 @@ class RenameNodeHandler extends StraightReplacementNodeHandler {
             this.compilerFactory.getNodeFromCompilerNode(newNode, currentSourceFile);
             return;
         }
-        else if (currentNodeKind === common.SyntaxKind.ExportSpecifier && newNodeKind === common.SyntaxKind.ExportSpecifier
+        else if (currentNodeKind === ts.SyntaxKind.ExportSpecifier && newNodeKind === ts.SyntaxKind.ExportSpecifier
             && currentNode.compilerNode.propertyName == null && newNode.propertyName != null) {
             handleImportOrExportSpecifier(this.compilerFactory);
             return;
         }
-        else if (currentNodeKind === common.SyntaxKind.ImportSpecifier && newNodeKind === common.SyntaxKind.ImportSpecifier
+        else if (currentNodeKind === ts.SyntaxKind.ImportSpecifier && newNodeKind === ts.SyntaxKind.ImportSpecifier
             && currentNode.compilerNode.propertyName == null && newNode.propertyName != null) {
             handleImportOrExportSpecifier(this.compilerFactory);
             return;
@@ -1709,7 +1734,7 @@ class RangeParentHandler {
     }
 }
 function getRealEnd(node, sourceFile) {
-    if (node.kind >= common.ts.SyntaxKind.FirstJSDocNode && node.kind <= common.ts.SyntaxKind.LastJSDocNode) {
+    if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) {
         return getPreviousMatchingPos(sourceFile.text, node.end, charCode => charCode !== CharCodes.ASTERISK && !common.StringUtils.isWhitespaceCharCode(charCode));
     }
     return node.end;
@@ -2306,7 +2331,7 @@ function insertIntoCommaSeparatedNodes(opts) {
     const nextNonCommentNode = getNextNonCommentNode();
     const separator = opts.useNewLines ? parent._context.manipulationSettings.getNewLineKindAsString() : " ";
     const parentNextSibling = parent.getNextSibling();
-    const isContained = parentNextSibling != null && (parentNextSibling.getKind() === common.SyntaxKind.CloseBraceToken || parentNextSibling.getKind() === common.SyntaxKind.CloseBracketToken);
+    const isContained = parentNextSibling != null && (parentNextSibling.getKind() === ts.SyntaxKind.CloseBraceToken || parentNextSibling.getKind() === ts.SyntaxKind.CloseBracketToken);
     let { newText } = opts;
     if (previousNode != null) {
         prependCommaAndSeparator();
@@ -2366,7 +2391,7 @@ function insertIntoCommaSeparatedNodes(opts) {
         const originalSourceFileText = parent.getSourceFile().getFullText();
         const previousNodeNextSibling = previousNonCommentNode.getNextSibling();
         let text = "";
-        if (previousNodeNextSibling != null && previousNodeNextSibling.getKind() === common.SyntaxKind.CommaToken) {
+        if (previousNodeNextSibling != null && previousNodeNextSibling.getKind() === ts.SyntaxKind.CommaToken) {
             appendNodeTrailingCommentRanges(previousNonCommentNode);
             text += ",";
             if (previousNonCommentNode === previousNode)
@@ -2609,14 +2634,14 @@ function removeCommaSeparatedChild(child) {
         removeFollowingNewLines: isRemovingFirstChild,
     });
     function addNextCommaIfAble() {
-        const commaToken = child.getNextSiblingIfKind(common.SyntaxKind.CommaToken);
+        const commaToken = child.getNextSiblingIfKind(ts.SyntaxKind.CommaToken);
         if (commaToken != null)
             childrenToRemove.push(commaToken);
     }
     function addPreviousCommaIfAble() {
         if (syntaxList.getLastChild() !== childrenToRemove[childrenToRemove.length - 1])
             return;
-        const precedingComma = child.getPreviousSiblingIfKind(common.SyntaxKind.CommaToken);
+        const precedingComma = child.getPreviousSiblingIfKind(ts.SyntaxKind.CommaToken);
         if (precedingComma != null)
             childrenToRemove.unshift(precedingComma);
     }
@@ -2715,7 +2740,7 @@ function ArgumentedNode(Base) {
                 printTextFromStringOrWriter(writer, argumentTexts[i]);
             }
             insertIntoCommaSeparatedNodes({
-                parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenParenToken).getNextSiblingIfKindOrThrow(common.SyntaxKind.SyntaxList),
+                parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenParenToken).getNextSiblingIfKindOrThrow(ts.SyntaxKind.SyntaxList),
                 currentNodes: originalArgs,
                 insertIndex: index,
                 newText: writer.toString(),
@@ -2740,10 +2765,10 @@ function ArgumentedNode(Base) {
 function AsyncableNode(Base) {
     return class extends Base {
         isAsync() {
-            return this.hasModifier(common.SyntaxKind.AsyncKeyword);
+            return this.hasModifier(ts.SyntaxKind.AsyncKeyword);
         }
         getAsyncKeyword() {
-            return this.getFirstModifierByKind(common.SyntaxKind.AsyncKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.AsyncKeyword);
         }
         getAsyncKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getAsyncKeyword(), "Expected to find an async keyword.");
@@ -2807,8 +2832,8 @@ function AwaitableNode(Base) {
     };
 }
 function getAwaitInsertPos(node) {
-    if (node.getKind() === common.SyntaxKind.ForOfStatement)
-        return node.getFirstChildByKindOrThrow(common.SyntaxKind.ForKeyword).getEnd();
+    if (node.getKind() === ts.SyntaxKind.ForOfStatement)
+        return node.getFirstChildByKindOrThrow(ts.SyntaxKind.ForKeyword).getEnd();
     throw new common.errors.NotImplementedError("Expected a for of statement node.");
 }
 
@@ -2988,7 +3013,7 @@ class Node {
     print(options = {}) {
         if (options.newLineKind == null)
             options.newLineKind = this._context.manipulationSettings.getNewLineKind();
-        if (this.getKind() === common.SyntaxKind.SourceFile)
+        if (this.getKind() === ts.SyntaxKind.SourceFile)
             return printNode(this.compilerNode, options);
         else
             return printNode(this.compilerNode, this._sourceFile.compilerNode, options);
@@ -3019,7 +3044,7 @@ class Node {
         const locals = this._getCompilerLocals();
         if (locals == null)
             return undefined;
-        const tsSymbol = locals.get(common.ts.escapeLeadingUnderscores(name));
+        const tsSymbol = locals.get(ts.escapeLeadingUnderscores(name));
         return tsSymbol == null ? undefined : this._context.compilerFactory.getSymbol(tsSymbol);
     }
     getLocals() {
@@ -3117,7 +3142,7 @@ class Node {
         for (const child of children) {
             if (this._context.compilerFactory.hasCompilerNode(child))
                 yield this._context.compilerFactory.getExistingNodeFromCompilerNode(child);
-            else if (child.kind === common.SyntaxKind.SyntaxList) {
+            else if (child.kind === ts.SyntaxKind.SyntaxList) {
                 yield this._getNodeFromCompilerNode(child);
             }
         }
@@ -3142,13 +3167,13 @@ class Node {
             || Node.isCaseClause(this)
             || Node.isDefaultClause(this)
             || Node.isJsxElement(this)) {
-            return node.getFirstChildByKind(common.SyntaxKind.SyntaxList);
+            return node.getFirstChildByKind(ts.SyntaxKind.SyntaxList);
         }
         let passedBrace = false;
         for (const child of node._getCompilerChildren()) {
             if (!passedBrace)
-                passedBrace = child.kind === common.SyntaxKind.OpenBraceToken;
-            else if (child.kind === common.SyntaxKind.SyntaxList)
+                passedBrace = child.kind === ts.SyntaxKind.OpenBraceToken;
+            else if (child.kind === ts.SyntaxKind.SyntaxList)
                 return this._getNodeFromCompilerNode(child);
         }
         return undefined;
@@ -3270,9 +3295,9 @@ class Node {
         function handleNode(thisNode, node) {
             if (handleStatements(thisNode, node))
                 return;
-            else if (node.kind === common.SyntaxKind.ArrowFunction) {
+            else if (node.kind === ts.SyntaxKind.ArrowFunction) {
                 const arrowFunction = node;
-                if (arrowFunction.body.kind !== common.SyntaxKind.Block)
+                if (arrowFunction.body.kind !== ts.SyntaxKind.Block)
                     statements.push(thisNode._getNodeFromCompilerNode(arrowFunction.body));
                 else
                     handleNode(thisNode, arrowFunction.body);
@@ -3292,7 +3317,7 @@ class Node {
             return true;
         }
         function handleChildren(thisNode, node) {
-            common.ts.forEachChild(node, childNode => handleNode(thisNode, childNode));
+            ts.forEachChild(node, childNode => handleNode(thisNode, childNode));
         }
     }
     getChildCount() {
@@ -3423,7 +3448,7 @@ class Node {
         return this.compilerNode.getFullText(this._sourceFile.compilerNode);
     }
     getCombinedModifierFlags() {
-        return common.ts.getCombinedModifierFlags(this.compilerNode);
+        return ts.getCombinedModifierFlags(this.compilerNode);
     }
     getSourceFile() {
         return this._sourceFile;
@@ -3496,7 +3521,7 @@ class Node {
     }
     getParentSyntaxList() {
         const kind = this.getKind();
-        if (kind === common.SyntaxKind.SingleLineCommentTrivia || kind === common.SyntaxKind.MultiLineCommentTrivia)
+        if (kind === ts.SyntaxKind.SingleLineCommentTrivia || kind === ts.SyntaxKind.MultiLineCommentTrivia)
             return this.getParentOrThrow().getChildSyntaxList();
         const syntaxList = getParentSyntaxList(this.compilerNode, this._sourceFile.compilerNode);
         return this._getNodeFromCompilerNodeIfExists(syntaxList);
@@ -3591,7 +3616,7 @@ class Node {
     }
     transform(visitNode) {
         const compilerFactory = this._context.compilerFactory;
-        const printer = common.ts.createPrinter({
+        const printer = ts.createPrinter({
             newLine: this._context.manipulationSettings.getNewLineKind(),
             removeComments: false,
         });
@@ -3601,7 +3626,7 @@ class Node {
         const transformerFactory = context => {
             return rootNode => innerVisit(rootNode, context);
         };
-        common.ts.transform(compilerNode, [transformerFactory], this._context.compilerOptions.get());
+        ts.transform(compilerNode, [transformerFactory], this._context.compilerOptions.get());
         replaceSourceFileTextStraight({
             sourceFile: this._sourceFile,
             newText: getTransformedText(),
@@ -3610,7 +3635,7 @@ class Node {
         function innerVisit(node, context) {
             const traversal = {
                 visitChildren() {
-                    node = common.ts.visitEachChild(node, child => innerVisit(child, context), context);
+                    node = ts.visitEachChild(node, child => innerVisit(child, context), context);
                     return node;
                 },
                 currentNode: node,
@@ -3646,7 +3671,7 @@ class Node {
             let lastPos = 0;
             for (const transform of transformations) {
                 finalText += fileText.substring(lastPos, transform.start);
-                finalText += printer.printNode(common.ts.EmitHint.Unspecified, transform.compilerNode, compilerSourceFile);
+                finalText += printer.printNode(ts.EmitHint.Unspecified, transform.compilerNode, compilerSourceFile);
                 lastPos = transform.end;
             }
             finalText += fileText.substring(lastPos);
@@ -3655,8 +3680,8 @@ class Node {
     }
     getLeadingCommentRanges() {
         return this._leadingCommentRanges || (this._leadingCommentRanges = this._getCommentsAtPos(this.getFullStart(), (text, pos) => {
-            const comments = common.ts.getLeadingCommentRanges(text, pos) || [];
-            if (this.getKind() === common.SyntaxKind.SingleLineCommentTrivia || this.getKind() === common.SyntaxKind.MultiLineCommentTrivia) {
+            const comments = ts.getLeadingCommentRanges(text, pos) || [];
+            if (this.getKind() === ts.SyntaxKind.SingleLineCommentTrivia || this.getKind() === ts.SyntaxKind.MultiLineCommentTrivia) {
                 const thisPos = this.getPos();
                 return comments.filter(r => r.pos < thisPos);
             }
@@ -3666,10 +3691,10 @@ class Node {
         }));
     }
     getTrailingCommentRanges() {
-        return this._trailingCommentRanges || (this._trailingCommentRanges = this._getCommentsAtPos(this.getEnd(), common.ts.getTrailingCommentRanges));
+        return this._trailingCommentRanges || (this._trailingCommentRanges = this._getCommentsAtPos(this.getEnd(), ts.getTrailingCommentRanges));
     }
     _getCommentsAtPos(pos, getComments) {
-        if (this.getKind() === common.SyntaxKind.SourceFile)
+        if (this.getKind() === ts.SyntaxKind.SourceFile)
             return [];
         return (getComments(this._sourceFile.getFullText(), pos) || []).map(r => new CommentRange(r, this._sourceFile));
     }
@@ -3744,7 +3769,7 @@ class Node {
         return common.errors.throwIfNullOrUndefined(this.getFirstAncestorByKind(kind), `Expected an ancestor with a syntax kind of ${common.getSyntaxKindName(kind)}.`);
     }
     getFirstAncestorByKind(kind) {
-        for (const parent of this._getAncestorsIterator(kind === common.SyntaxKind.SyntaxList)) {
+        for (const parent of this._getAncestorsIterator(kind === ts.SyntaxKind.SyntaxList)) {
             if (parent.getKind() === kind)
                 return parent;
         }
@@ -3929,7 +3954,7 @@ class Node {
     }
     static isCommentNode(node) {
         const kind = node === null || node === void 0 ? void 0 : node.getKind();
-        return kind === common.SyntaxKind.SingleLineCommentTrivia || kind === common.SyntaxKind.MultiLineCommentTrivia;
+        return kind === ts.SyntaxKind.SingleLineCommentTrivia || kind === ts.SyntaxKind.MultiLineCommentTrivia;
     }
     static isCommentStatement(node) {
         return (node === null || node === void 0 ? void 0 : node.compilerNode)._commentKind === exports.CommentNodeKind.Statement;
@@ -3948,12 +3973,12 @@ class Node {
     }
     static isAbstractableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
                 return true;
             default:
                 return false;
@@ -3961,14 +3986,14 @@ class Node {
     }
     static isAmbientableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
@@ -3976,35 +4001,35 @@ class Node {
     }
     static isArgumentedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.NewExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isArrayTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ArrayType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ArrayType;
     }
     static isAsyncableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isAwaitableNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ForOfStatement;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ForOfStatement;
     }
     static isBindingNamedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BindingElement:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.BindingElement:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.VariableDeclaration:
                 return true;
             default:
                 return false;
@@ -4012,9 +4037,9 @@ class Node {
     }
     static isBodiedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ModuleDeclaration:
                 return true;
             default:
                 return false;
@@ -4022,11 +4047,11 @@ class Node {
     }
     static isBodyableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.FunctionDeclaration:
                 return true;
             default:
                 return false;
@@ -4034,59 +4059,59 @@ class Node {
     }
     static isBooleanLiteral(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
                 return true;
             default:
                 return false;
         }
     }
     static isCallSignatureDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.CallSignature;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.CallSignature;
     }
     static isChildOrderableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.ExportAssignment:
-            case common.SyntaxKind.ExportDeclaration:
-            case common.SyntaxKind.ImportDeclaration:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleBlock:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.Block:
-            case common.SyntaxKind.BreakStatement:
-            case common.SyntaxKind.ContinueStatement:
-            case common.SyntaxKind.DebuggerStatement:
-            case common.SyntaxKind.DoStatement:
-            case common.SyntaxKind.EmptyStatement:
-            case common.SyntaxKind.ExpressionStatement:
-            case common.SyntaxKind.ForInStatement:
-            case common.SyntaxKind.ForOfStatement:
-            case common.SyntaxKind.ForStatement:
-            case common.SyntaxKind.IfStatement:
-            case common.SyntaxKind.LabeledStatement:
-            case common.SyntaxKind.NotEmittedStatement:
-            case common.SyntaxKind.ReturnStatement:
-            case common.SyntaxKind.SwitchStatement:
-            case common.SyntaxKind.ThrowStatement:
-            case common.SyntaxKind.TryStatement:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.WhileStatement:
-            case common.SyntaxKind.WithStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.ExportDeclaration:
+            case ts.SyntaxKind.ImportDeclaration:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleBlock:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.Block:
+            case ts.SyntaxKind.BreakStatement:
+            case ts.SyntaxKind.ContinueStatement:
+            case ts.SyntaxKind.DebuggerStatement:
+            case ts.SyntaxKind.DoStatement:
+            case ts.SyntaxKind.EmptyStatement:
+            case ts.SyntaxKind.ExpressionStatement:
+            case ts.SyntaxKind.ForInStatement:
+            case ts.SyntaxKind.ForOfStatement:
+            case ts.SyntaxKind.ForStatement:
+            case ts.SyntaxKind.IfStatement:
+            case ts.SyntaxKind.LabeledStatement:
+            case ts.SyntaxKind.NotEmittedStatement:
+            case ts.SyntaxKind.ReturnStatement:
+            case ts.SyntaxKind.SwitchStatement:
+            case ts.SyntaxKind.ThrowStatement:
+            case ts.SyntaxKind.TryStatement:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.WhileStatement:
+            case ts.SyntaxKind.WithStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
@@ -4094,34 +4119,34 @@ class Node {
     }
     static isClassLikeDeclarationBase(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isConditionalTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ConditionalType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ConditionalType;
     }
     static isConstructSignatureDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ConstructSignature;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ConstructSignature;
     }
     static isConstructorDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.Constructor;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.Constructor;
     }
     static isConstructorTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ConstructorType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ConstructorType;
     }
     static isDecoratableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.Parameter:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.Parameter:
                 return true;
             default:
                 return false;
@@ -4129,8 +4154,8 @@ class Node {
     }
     static isExclamationTokenableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.VariableDeclaration:
                 return true;
             default:
                 return false;
@@ -4138,14 +4163,14 @@ class Node {
     }
     static isExportGetableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.VariableDeclaration:
                 return true;
             default:
                 return false;
@@ -4153,13 +4178,13 @@ class Node {
     }
     static isExportableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
@@ -4167,61 +4192,61 @@ class Node {
     }
     static isExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.AnyKeyword:
-            case common.SyntaxKind.BooleanKeyword:
-            case common.SyntaxKind.NumberKeyword:
-            case common.SyntaxKind.ObjectKeyword:
-            case common.SyntaxKind.StringKeyword:
-            case common.SyntaxKind.SymbolKeyword:
-            case common.SyntaxKind.UndefinedKeyword:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.AsExpression:
-            case common.SyntaxKind.AwaitExpression:
-            case common.SyntaxKind.BinaryExpression:
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.CommaListExpression:
-            case common.SyntaxKind.ConditionalExpression:
-            case common.SyntaxKind.DeleteExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.NonNullExpression:
-            case common.SyntaxKind.OmittedExpression:
-            case common.SyntaxKind.ParenthesizedExpression:
-            case common.SyntaxKind.PartiallyEmittedExpression:
-            case common.SyntaxKind.PostfixUnaryExpression:
-            case common.SyntaxKind.PrefixUnaryExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.SpreadElement:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.TypeAssertionExpression:
-            case common.SyntaxKind.TypeOfExpression:
-            case common.SyntaxKind.VoidExpression:
-            case common.SyntaxKind.YieldExpression:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxClosingFragment:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxExpression:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxOpeningElement:
-            case common.SyntaxKind.JsxOpeningFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TaggedTemplateExpression:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.AnyKeyword:
+            case ts.SyntaxKind.BooleanKeyword:
+            case ts.SyntaxKind.NumberKeyword:
+            case ts.SyntaxKind.ObjectKeyword:
+            case ts.SyntaxKind.StringKeyword:
+            case ts.SyntaxKind.SymbolKeyword:
+            case ts.SyntaxKind.UndefinedKeyword:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.AsExpression:
+            case ts.SyntaxKind.AwaitExpression:
+            case ts.SyntaxKind.BinaryExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.CommaListExpression:
+            case ts.SyntaxKind.ConditionalExpression:
+            case ts.SyntaxKind.DeleteExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.NonNullExpression:
+            case ts.SyntaxKind.OmittedExpression:
+            case ts.SyntaxKind.ParenthesizedExpression:
+            case ts.SyntaxKind.PartiallyEmittedExpression:
+            case ts.SyntaxKind.PostfixUnaryExpression:
+            case ts.SyntaxKind.PrefixUnaryExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.SpreadElement:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.TypeAssertionExpression:
+            case ts.SyntaxKind.TypeOfExpression:
+            case ts.SyntaxKind.VoidExpression:
+            case ts.SyntaxKind.YieldExpression:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxClosingFragment:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxExpression:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxOpeningElement:
+            case ts.SyntaxKind.JsxOpeningFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -4229,56 +4254,56 @@ class Node {
     }
     static isExpressionedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.AsExpression:
-            case common.SyntaxKind.NonNullExpression:
-            case common.SyntaxKind.ParenthesizedExpression:
-            case common.SyntaxKind.PartiallyEmittedExpression:
-            case common.SyntaxKind.SpreadElement:
-            case common.SyntaxKind.SpreadAssignment:
-            case common.SyntaxKind.TemplateSpan:
+            case ts.SyntaxKind.AsExpression:
+            case ts.SyntaxKind.NonNullExpression:
+            case ts.SyntaxKind.ParenthesizedExpression:
+            case ts.SyntaxKind.PartiallyEmittedExpression:
+            case ts.SyntaxKind.SpreadElement:
+            case ts.SyntaxKind.SpreadAssignment:
+            case ts.SyntaxKind.TemplateSpan:
                 return true;
             default:
                 return false;
         }
     }
     static isExtendsClauseableNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.InterfaceDeclaration;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.InterfaceDeclaration;
     }
     static isFunctionLikeDeclaration(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
                 return true;
             default:
                 return false;
         }
     }
     static isFunctionTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.FunctionType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.FunctionType;
     }
     static isGeneratorableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.YieldExpression:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.YieldExpression:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isGetAccessorDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.GetAccessor;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.GetAccessor;
     }
     static isHeritageClauseableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.InterfaceDeclaration:
                 return true;
             default:
                 return false;
@@ -4286,38 +4311,38 @@ class Node {
     }
     static isImplementsClauseableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isImportExpression(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ImportKeyword;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ImportKeyword;
     }
     static isImportTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ImportType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ImportType;
     }
     static isIndexSignatureDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.IndexSignature;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.IndexSignature;
     }
     static isIndexedAccessTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.IndexedAccessType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.IndexedAccessType;
     }
     static isInferTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.InferType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.InferType;
     }
     static isInitializerExpressionGetableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BindingElement:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.VariableDeclaration:
-            case common.SyntaxKind.PropertyAssignment:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.BindingElement:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4325,39 +4350,39 @@ class Node {
     }
     static isInitializerExpressionableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BindingElement:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.BindingElement:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.VariableDeclaration:
                 return true;
             default:
                 return false;
         }
     }
     static isIntersectionTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.IntersectionType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.IntersectionType;
     }
     static isIterationStatement(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.DoStatement:
-            case common.SyntaxKind.ForInStatement:
-            case common.SyntaxKind.ForOfStatement:
-            case common.SyntaxKind.ForStatement:
-            case common.SyntaxKind.WhileStatement:
+            case ts.SyntaxKind.DoStatement:
+            case ts.SyntaxKind.ForInStatement:
+            case ts.SyntaxKind.ForOfStatement:
+            case ts.SyntaxKind.ForStatement:
+            case ts.SyntaxKind.WhileStatement:
                 return true;
             default:
                 return false;
         }
     }
     static isJSDoc(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.JSDocComment;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.JSDocComment;
     }
     static isJSDocPropertyLikeTag(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JSDocParameterTag:
-            case common.SyntaxKind.JSDocPropertyTag:
+            case ts.SyntaxKind.JSDocParameterTag:
+            case ts.SyntaxKind.JSDocPropertyTag:
                 return true;
             default:
                 return false;
@@ -4365,20 +4390,20 @@ class Node {
     }
     static isJSDocTag(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JSDocAugmentsTag:
-            case common.SyntaxKind.JSDocClassTag:
-            case common.SyntaxKind.JSDocParameterTag:
-            case common.SyntaxKind.JSDocPrivateTag:
-            case common.SyntaxKind.JSDocPropertyTag:
-            case common.SyntaxKind.JSDocProtectedTag:
-            case common.SyntaxKind.JSDocPublicTag:
-            case common.SyntaxKind.JSDocReadonlyTag:
-            case common.SyntaxKind.JSDocReturnTag:
-            case common.SyntaxKind.JSDocTemplateTag:
-            case common.SyntaxKind.JSDocThisTag:
-            case common.SyntaxKind.JSDocTypedefTag:
-            case common.SyntaxKind.JSDocTypeTag:
-            case common.SyntaxKind.JSDocTag:
+            case ts.SyntaxKind.JSDocAugmentsTag:
+            case ts.SyntaxKind.JSDocClassTag:
+            case ts.SyntaxKind.JSDocParameterTag:
+            case ts.SyntaxKind.JSDocPrivateTag:
+            case ts.SyntaxKind.JSDocPropertyTag:
+            case ts.SyntaxKind.JSDocProtectedTag:
+            case ts.SyntaxKind.JSDocPublicTag:
+            case ts.SyntaxKind.JSDocReadonlyTag:
+            case ts.SyntaxKind.JSDocReturnTag:
+            case ts.SyntaxKind.JSDocTemplateTag:
+            case ts.SyntaxKind.JSDocThisTag:
+            case ts.SyntaxKind.JSDocTypedefTag:
+            case ts.SyntaxKind.JSDocTypeTag:
+            case ts.SyntaxKind.JSDocTag:
                 return true;
             default:
                 return false;
@@ -4386,8 +4411,8 @@ class Node {
     }
     static isJSDocType(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JSDocFunctionType:
-            case common.SyntaxKind.JSDocSignature:
+            case ts.SyntaxKind.JSDocFunctionType:
+            case ts.SyntaxKind.JSDocSignature:
                 return true;
             default:
                 return false;
@@ -4395,45 +4420,45 @@ class Node {
     }
     static isJSDocTypeExpressionableTag(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JSDocReturnTag:
-            case common.SyntaxKind.JSDocThisTag:
+            case ts.SyntaxKind.JSDocReturnTag:
+            case ts.SyntaxKind.JSDocThisTag:
                 return true;
             default:
                 return false;
         }
     }
     static isJSDocTypeParameteredTag(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.JSDocTemplateTag;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.JSDocTemplateTag;
     }
     static isJSDocUnknownTag(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.JSDocTag;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.JSDocTag;
     }
     static isJSDocableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.ExpressionStatement:
-            case common.SyntaxKind.LabeledStatement:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.ExpressionStatement:
+            case ts.SyntaxKind.LabeledStatement:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
@@ -4441,8 +4466,8 @@ class Node {
     }
     static isJsxAttributedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JsxOpeningElement:
-            case common.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.JsxOpeningElement:
+            case ts.SyntaxKind.JsxSelfClosingElement:
                 return true;
             default:
                 return false;
@@ -4450,9 +4475,9 @@ class Node {
     }
     static isJsxTagNamedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JsxClosingElement:
-            case common.SyntaxKind.JsxOpeningElement:
-            case common.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.JsxClosingElement:
+            case ts.SyntaxKind.JsxOpeningElement:
+            case ts.SyntaxKind.JsxSelfClosingElement:
                 return true;
             default:
                 return false;
@@ -4460,33 +4485,33 @@ class Node {
     }
     static isLeftHandSideExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.NonNullExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TaggedTemplateExpression:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.NonNullExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -4494,11 +4519,11 @@ class Node {
     }
     static isLeftHandSideExpressionedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.ExpressionWithTypeArguments:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.ExpressionWithTypeArguments:
                 return true;
             default:
                 return false;
@@ -4506,11 +4531,11 @@ class Node {
     }
     static isLiteralExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
                 return true;
             default:
                 return false;
@@ -4518,50 +4543,50 @@ class Node {
     }
     static isLiteralLikeNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JsxText:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TemplateHead:
-            case common.SyntaxKind.TemplateMiddle:
-            case common.SyntaxKind.TemplateTail:
+            case ts.SyntaxKind.JsxText:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TemplateHead:
+            case ts.SyntaxKind.TemplateMiddle:
+            case ts.SyntaxKind.TemplateTail:
                 return true;
             default:
                 return false;
         }
     }
     static isLiteralTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.LiteralType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.LiteralType;
     }
     static isMemberExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TaggedTemplateExpression:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -4569,25 +4594,25 @@ class Node {
     }
     static isModifierableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.VariableDeclarationList:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.VariableDeclarationList:
                 return true;
             default:
                 return false;
@@ -4595,8 +4620,8 @@ class Node {
     }
     static isModuledNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.SourceFile:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.SourceFile:
                 return true;
             default:
                 return false;
@@ -4604,10 +4629,10 @@ class Node {
     }
     static isNameableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
                 return true;
             default:
                 return false;
@@ -4615,16 +4640,16 @@ class Node {
     }
     static isNamedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.JsxAttribute:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.TypeParameter:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.JsxAttribute:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.TypeParameter:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4632,83 +4657,83 @@ class Node {
     }
     static isNamespaceChildableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.VariableStatement:
                 return true;
             default:
                 return false;
         }
     }
     static isNamespaceDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ModuleDeclaration;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ModuleDeclaration;
     }
     static isNullLiteral(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.NullKeyword;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.NullKeyword;
     }
     static isOverloadableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
                 return true;
             default:
                 return false;
         }
     }
     static isParameterDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.Parameter;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.Parameter;
     }
     static isParameteredNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.JSDocFunctionType:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.ConstructorType:
-            case common.SyntaxKind.FunctionType:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.JSDocFunctionType:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.ConstructorType:
+            case ts.SyntaxKind.FunctionType:
                 return true;
             default:
                 return false;
         }
     }
     static isParenthesizedTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ParenthesizedType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ParenthesizedType;
     }
     static isPrimaryExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -4716,14 +4741,14 @@ class Node {
     }
     static isPropertyNamedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.PropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4731,9 +4756,9 @@ class Node {
     }
     static isQuestionDotTokenableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
                 return true;
             default:
                 return false;
@@ -4741,13 +4766,13 @@ class Node {
     }
     static isQuestionTokenableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.PropertyAssignment:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4755,10 +4780,10 @@ class Node {
     }
     static isReadonlyableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.PropertySignature:
                 return true;
             default:
                 return false;
@@ -4766,33 +4791,33 @@ class Node {
     }
     static isReferenceFindableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BindingElement:
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.JsxAttribute:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.PrivateIdentifier:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.TypeParameter:
-            case common.SyntaxKind.VariableDeclaration:
-            case common.SyntaxKind.PropertyAssignment:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.BindingElement:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.JsxAttribute:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.PrivateIdentifier:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.TypeParameter:
+            case ts.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4800,35 +4825,35 @@ class Node {
     }
     static isRenameableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.BindingElement:
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.JsxAttribute:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.NamespaceExport:
-            case common.SyntaxKind.NamespaceImport:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.PrivateIdentifier:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.TypeParameter:
-            case common.SyntaxKind.VariableDeclaration:
-            case common.SyntaxKind.PropertyAssignment:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.BindingElement:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.JsxAttribute:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.NamespaceExport:
+            case ts.SyntaxKind.NamespaceImport:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.PrivateIdentifier:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.TypeParameter:
+            case ts.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return true;
             default:
                 return false;
@@ -4836,58 +4861,58 @@ class Node {
     }
     static isReturnTypedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.JSDocFunctionType:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.ConstructorType:
-            case common.SyntaxKind.FunctionType:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.JSDocFunctionType:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.ConstructorType:
+            case ts.SyntaxKind.FunctionType:
                 return true;
             default:
                 return false;
         }
     }
     static isScopeableNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.Parameter;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.Parameter;
     }
     static isScopedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
                 return true;
             default:
                 return false;
         }
     }
     static isSetAccessorDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.SetAccessor;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.SetAccessor;
     }
     static isSignaturedDeclaration(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.JSDocFunctionType:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.ConstructorType:
-            case common.SyntaxKind.FunctionType:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.JSDocFunctionType:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.ConstructorType:
+            case ts.SyntaxKind.FunctionType:
                 return true;
             default:
                 return false;
@@ -4895,37 +4920,37 @@ class Node {
     }
     static isStatement(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ExportAssignment:
-            case common.SyntaxKind.ExportDeclaration:
-            case common.SyntaxKind.ImportDeclaration:
-            case common.SyntaxKind.ImportEqualsDeclaration:
-            case common.SyntaxKind.ModuleBlock:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.Block:
-            case common.SyntaxKind.BreakStatement:
-            case common.SyntaxKind.ContinueStatement:
-            case common.SyntaxKind.DebuggerStatement:
-            case common.SyntaxKind.DoStatement:
-            case common.SyntaxKind.EmptyStatement:
-            case common.SyntaxKind.ExpressionStatement:
-            case common.SyntaxKind.ForInStatement:
-            case common.SyntaxKind.ForOfStatement:
-            case common.SyntaxKind.ForStatement:
-            case common.SyntaxKind.IfStatement:
-            case common.SyntaxKind.LabeledStatement:
-            case common.SyntaxKind.NotEmittedStatement:
-            case common.SyntaxKind.ReturnStatement:
-            case common.SyntaxKind.SwitchStatement:
-            case common.SyntaxKind.ThrowStatement:
-            case common.SyntaxKind.TryStatement:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.WhileStatement:
-            case common.SyntaxKind.WithStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.ExportDeclaration:
+            case ts.SyntaxKind.ImportDeclaration:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.ModuleBlock:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.Block:
+            case ts.SyntaxKind.BreakStatement:
+            case ts.SyntaxKind.ContinueStatement:
+            case ts.SyntaxKind.DebuggerStatement:
+            case ts.SyntaxKind.DoStatement:
+            case ts.SyntaxKind.EmptyStatement:
+            case ts.SyntaxKind.ExpressionStatement:
+            case ts.SyntaxKind.ForInStatement:
+            case ts.SyntaxKind.ForOfStatement:
+            case ts.SyntaxKind.ForStatement:
+            case ts.SyntaxKind.IfStatement:
+            case ts.SyntaxKind.LabeledStatement:
+            case ts.SyntaxKind.NotEmittedStatement:
+            case ts.SyntaxKind.ReturnStatement:
+            case ts.SyntaxKind.SwitchStatement:
+            case ts.SyntaxKind.ThrowStatement:
+            case ts.SyntaxKind.TryStatement:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.WhileStatement:
+            case ts.SyntaxKind.WithStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
@@ -4933,19 +4958,19 @@ class Node {
     }
     static isStatementedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.ModuleBlock:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.SourceFile:
-            case common.SyntaxKind.Block:
-            case common.SyntaxKind.CaseClause:
-            case common.SyntaxKind.DefaultClause:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ModuleBlock:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.SourceFile:
+            case ts.SyntaxKind.Block:
+            case ts.SyntaxKind.CaseClause:
+            case ts.SyntaxKind.DefaultClause:
                 return true;
             default:
                 return false;
@@ -4953,71 +4978,71 @@ class Node {
     }
     static isStaticableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
                 return true;
             default:
                 return false;
         }
     }
     static isSuperExpression(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.SuperKeyword;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.SuperKeyword;
     }
     static isTextInsertableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.SourceFile:
-            case common.SyntaxKind.Block:
-            case common.SyntaxKind.CaseBlock:
-            case common.SyntaxKind.CaseClause:
-            case common.SyntaxKind.DefaultClause:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.SourceFile:
+            case ts.SyntaxKind.Block:
+            case ts.SyntaxKind.CaseBlock:
+            case ts.SyntaxKind.CaseClause:
+            case ts.SyntaxKind.DefaultClause:
                 return true;
             default:
                 return false;
         }
     }
     static isThisExpression(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ThisKeyword;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ThisKeyword;
     }
     static isThisTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.ThisType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.ThisType;
     }
     static isTupleTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TupleType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TupleType;
     }
     static isTypeArgumentedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.ImportType:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.ImportType:
                 return true;
             default:
                 return false;
         }
     }
     static isTypeAssertion(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TypeAssertionExpression;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TypeAssertionExpression;
     }
     static isTypeElement(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
                 return true;
             default:
                 return false;
@@ -5025,83 +5050,83 @@ class Node {
     }
     static isTypeElementMemberedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.TypeLiteral:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.TypeLiteral:
                 return true;
             default:
                 return false;
         }
     }
     static isTypeLiteralNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TypeLiteral;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TypeLiteral;
     }
     static isTypeNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.JSDocFunctionType:
-            case common.SyntaxKind.JSDocSignature:
-            case common.SyntaxKind.JSDocTypeExpression:
-            case common.SyntaxKind.ArrayType:
-            case common.SyntaxKind.ConditionalType:
-            case common.SyntaxKind.ConstructorType:
-            case common.SyntaxKind.ExpressionWithTypeArguments:
-            case common.SyntaxKind.FunctionType:
-            case common.SyntaxKind.ImportType:
-            case common.SyntaxKind.IndexedAccessType:
-            case common.SyntaxKind.InferType:
-            case common.SyntaxKind.IntersectionType:
-            case common.SyntaxKind.LiteralType:
-            case common.SyntaxKind.ParenthesizedType:
-            case common.SyntaxKind.ThisType:
-            case common.SyntaxKind.TupleType:
-            case common.SyntaxKind.TypeLiteral:
-            case common.SyntaxKind.TypePredicate:
-            case common.SyntaxKind.TypeReference:
-            case common.SyntaxKind.UnionType:
+            case ts.SyntaxKind.JSDocFunctionType:
+            case ts.SyntaxKind.JSDocSignature:
+            case ts.SyntaxKind.JSDocTypeExpression:
+            case ts.SyntaxKind.ArrayType:
+            case ts.SyntaxKind.ConditionalType:
+            case ts.SyntaxKind.ConstructorType:
+            case ts.SyntaxKind.ExpressionWithTypeArguments:
+            case ts.SyntaxKind.FunctionType:
+            case ts.SyntaxKind.ImportType:
+            case ts.SyntaxKind.IndexedAccessType:
+            case ts.SyntaxKind.InferType:
+            case ts.SyntaxKind.IntersectionType:
+            case ts.SyntaxKind.LiteralType:
+            case ts.SyntaxKind.ParenthesizedType:
+            case ts.SyntaxKind.ThisType:
+            case ts.SyntaxKind.TupleType:
+            case ts.SyntaxKind.TypeLiteral:
+            case ts.SyntaxKind.TypePredicate:
+            case ts.SyntaxKind.TypeReference:
+            case ts.SyntaxKind.UnionType:
                 return true;
             default:
                 return false;
         }
     }
     static isTypeParameterDeclaration(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TypeParameter;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TypeParameter;
     }
     static isTypeParameteredNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.ArrowFunction:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.FunctionType:
-            case common.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.ArrowFunction:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.FunctionType:
+            case ts.SyntaxKind.TypeAliasDeclaration:
                 return true;
             default:
                 return false;
         }
     }
     static isTypePredicateNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TypePredicate;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TypePredicate;
     }
     static isTypeReferenceNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.TypeReference;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.TypeReference;
     }
     static isTypedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.AsExpression:
-            case common.SyntaxKind.TypeAssertionExpression:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.AsExpression:
+            case ts.SyntaxKind.TypeAssertionExpression:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.VariableDeclaration:
                 return true;
             default:
                 return false;
@@ -5109,40 +5134,40 @@ class Node {
     }
     static isUnaryExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.AwaitExpression:
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.DeleteExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.NonNullExpression:
-            case common.SyntaxKind.PostfixUnaryExpression:
-            case common.SyntaxKind.PrefixUnaryExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.TypeAssertionExpression:
-            case common.SyntaxKind.TypeOfExpression:
-            case common.SyntaxKind.VoidExpression:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TaggedTemplateExpression:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.AwaitExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.DeleteExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.NonNullExpression:
+            case ts.SyntaxKind.PostfixUnaryExpression:
+            case ts.SyntaxKind.PrefixUnaryExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.TypeAssertionExpression:
+            case ts.SyntaxKind.TypeOfExpression:
+            case ts.SyntaxKind.VoidExpression:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -5150,23 +5175,23 @@ class Node {
     }
     static isUnaryExpressionedNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.AwaitExpression:
-            case common.SyntaxKind.DeleteExpression:
-            case common.SyntaxKind.TypeAssertionExpression:
-            case common.SyntaxKind.TypeOfExpression:
-            case common.SyntaxKind.VoidExpression:
+            case ts.SyntaxKind.AwaitExpression:
+            case ts.SyntaxKind.DeleteExpression:
+            case ts.SyntaxKind.TypeAssertionExpression:
+            case ts.SyntaxKind.TypeOfExpression:
+            case ts.SyntaxKind.VoidExpression:
                 return true;
             default:
                 return false;
         }
     }
     static isUnionTypeNode(node) {
-        return (node === null || node === void 0 ? void 0 : node.getKind()) === common.SyntaxKind.UnionType;
+        return (node === null || node === void 0 ? void 0 : node.getKind()) === ts.SyntaxKind.UnionType;
     }
     static isUnwrappableNode(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.ModuleDeclaration:
                 return true;
             default:
                 return false;
@@ -5174,33 +5199,33 @@ class Node {
     }
     static isUpdateExpression(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassExpression:
-            case common.SyntaxKind.CallExpression:
-            case common.SyntaxKind.ElementAccessExpression:
-            case common.SyntaxKind.ImportKeyword:
-            case common.SyntaxKind.MetaProperty:
-            case common.SyntaxKind.NewExpression:
-            case common.SyntaxKind.NonNullExpression:
-            case common.SyntaxKind.PropertyAccessExpression:
-            case common.SyntaxKind.SuperKeyword:
-            case common.SyntaxKind.ThisKeyword:
-            case common.SyntaxKind.FunctionExpression:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxFragment:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.BigIntLiteral:
-            case common.SyntaxKind.FalseKeyword:
-            case common.SyntaxKind.TrueKeyword:
-            case common.SyntaxKind.NullKeyword:
-            case common.SyntaxKind.NumericLiteral:
-            case common.SyntaxKind.RegularExpressionLiteral:
-            case common.SyntaxKind.StringLiteral:
-            case common.SyntaxKind.Identifier:
-            case common.SyntaxKind.ArrayLiteralExpression:
-            case common.SyntaxKind.ObjectLiteralExpression:
-            case common.SyntaxKind.NoSubstitutionTemplateLiteral:
-            case common.SyntaxKind.TaggedTemplateExpression:
-            case common.SyntaxKind.TemplateExpression:
+            case ts.SyntaxKind.ClassExpression:
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.ElementAccessExpression:
+            case ts.SyntaxKind.ImportKeyword:
+            case ts.SyntaxKind.MetaProperty:
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.NonNullExpression:
+            case ts.SyntaxKind.PropertyAccessExpression:
+            case ts.SyntaxKind.SuperKeyword:
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxFragment:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.BigIntLiteral:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.RegularExpressionLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ArrayLiteralExpression:
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.TemplateExpression:
                 return true;
             default:
                 return false;
@@ -5208,188 +5233,188 @@ class Node {
     }
     static _hasStructure(node) {
         switch (node === null || node === void 0 ? void 0 : node.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
-            case common.SyntaxKind.Constructor:
-            case common.SyntaxKind.GetAccessor:
-            case common.SyntaxKind.MethodDeclaration:
-            case common.SyntaxKind.PropertyDeclaration:
-            case common.SyntaxKind.SetAccessor:
-            case common.SyntaxKind.Decorator:
-            case common.SyntaxKind.JSDocComment:
-            case common.SyntaxKind.EnumDeclaration:
-            case common.SyntaxKind.EnumMember:
-            case common.SyntaxKind.FunctionDeclaration:
-            case common.SyntaxKind.Parameter:
-            case common.SyntaxKind.CallSignature:
-            case common.SyntaxKind.ConstructSignature:
-            case common.SyntaxKind.IndexSignature:
-            case common.SyntaxKind.InterfaceDeclaration:
-            case common.SyntaxKind.MethodSignature:
-            case common.SyntaxKind.PropertySignature:
-            case common.SyntaxKind.JsxAttribute:
-            case common.SyntaxKind.JsxElement:
-            case common.SyntaxKind.JsxSelfClosingElement:
-            case common.SyntaxKind.JsxSpreadAttribute:
-            case common.SyntaxKind.ExportAssignment:
-            case common.SyntaxKind.ExportDeclaration:
-            case common.SyntaxKind.ExportSpecifier:
-            case common.SyntaxKind.ImportDeclaration:
-            case common.SyntaxKind.ImportSpecifier:
-            case common.SyntaxKind.ModuleDeclaration:
-            case common.SyntaxKind.SourceFile:
-            case common.SyntaxKind.VariableStatement:
-            case common.SyntaxKind.TypeAliasDeclaration:
-            case common.SyntaxKind.TypeParameter:
-            case common.SyntaxKind.VariableDeclaration:
-            case common.SyntaxKind.PropertyAssignment:
-            case common.SyntaxKind.ShorthandPropertyAssignment:
-            case common.SyntaxKind.SpreadAssignment:
+            case ts.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.Constructor:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.SetAccessor:
+            case ts.SyntaxKind.Decorator:
+            case ts.SyntaxKind.JSDocComment:
+            case ts.SyntaxKind.EnumDeclaration:
+            case ts.SyntaxKind.EnumMember:
+            case ts.SyntaxKind.FunctionDeclaration:
+            case ts.SyntaxKind.Parameter:
+            case ts.SyntaxKind.CallSignature:
+            case ts.SyntaxKind.ConstructSignature:
+            case ts.SyntaxKind.IndexSignature:
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.PropertySignature:
+            case ts.SyntaxKind.JsxAttribute:
+            case ts.SyntaxKind.JsxElement:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+            case ts.SyntaxKind.JsxSpreadAttribute:
+            case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.ExportDeclaration:
+            case ts.SyntaxKind.ExportSpecifier:
+            case ts.SyntaxKind.ImportDeclaration:
+            case ts.SyntaxKind.ImportSpecifier:
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.SourceFile:
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.TypeParameter:
+            case ts.SyntaxKind.VariableDeclaration:
+            case ts.SyntaxKind.PropertyAssignment:
+            case ts.SyntaxKind.ShorthandPropertyAssignment:
+            case ts.SyntaxKind.SpreadAssignment:
                 return true;
             default:
                 return false;
         }
     }
 }
-Node.isAnyKeyword = Node.is(common.SyntaxKind.AnyKeyword);
-Node.isArrayBindingPattern = Node.is(common.SyntaxKind.ArrayBindingPattern);
-Node.isArrayLiteralExpression = Node.is(common.SyntaxKind.ArrayLiteralExpression);
-Node.isArrowFunction = Node.is(common.SyntaxKind.ArrowFunction);
-Node.isAsExpression = Node.is(common.SyntaxKind.AsExpression);
-Node.isAwaitExpression = Node.is(common.SyntaxKind.AwaitExpression);
-Node.isBigIntLiteral = Node.is(common.SyntaxKind.BigIntLiteral);
-Node.isBinaryExpression = Node.is(common.SyntaxKind.BinaryExpression);
-Node.isBindingElement = Node.is(common.SyntaxKind.BindingElement);
-Node.isBlock = Node.is(common.SyntaxKind.Block);
-Node.isBooleanKeyword = Node.is(common.SyntaxKind.BooleanKeyword);
-Node.isBreakStatement = Node.is(common.SyntaxKind.BreakStatement);
-Node.isCallExpression = Node.is(common.SyntaxKind.CallExpression);
-Node.isCaseBlock = Node.is(common.SyntaxKind.CaseBlock);
-Node.isCaseClause = Node.is(common.SyntaxKind.CaseClause);
-Node.isCatchClause = Node.is(common.SyntaxKind.CatchClause);
-Node.isClassDeclaration = Node.is(common.SyntaxKind.ClassDeclaration);
-Node.isClassExpression = Node.is(common.SyntaxKind.ClassExpression);
-Node.isCommaListExpression = Node.is(common.SyntaxKind.CommaListExpression);
-Node.isComputedPropertyName = Node.is(common.SyntaxKind.ComputedPropertyName);
-Node.isConditionalExpression = Node.is(common.SyntaxKind.ConditionalExpression);
-Node.isContinueStatement = Node.is(common.SyntaxKind.ContinueStatement);
-Node.isDebuggerStatement = Node.is(common.SyntaxKind.DebuggerStatement);
-Node.isDecorator = Node.is(common.SyntaxKind.Decorator);
-Node.isDefaultClause = Node.is(common.SyntaxKind.DefaultClause);
-Node.isDeleteExpression = Node.is(common.SyntaxKind.DeleteExpression);
-Node.isDoStatement = Node.is(common.SyntaxKind.DoStatement);
-Node.isElementAccessExpression = Node.is(common.SyntaxKind.ElementAccessExpression);
-Node.isEmptyStatement = Node.is(common.SyntaxKind.EmptyStatement);
-Node.isEnumDeclaration = Node.is(common.SyntaxKind.EnumDeclaration);
-Node.isEnumMember = Node.is(common.SyntaxKind.EnumMember);
-Node.isExportAssignment = Node.is(common.SyntaxKind.ExportAssignment);
-Node.isExportDeclaration = Node.is(common.SyntaxKind.ExportDeclaration);
-Node.isExportSpecifier = Node.is(common.SyntaxKind.ExportSpecifier);
-Node.isExpressionStatement = Node.is(common.SyntaxKind.ExpressionStatement);
-Node.isExpressionWithTypeArguments = Node.is(common.SyntaxKind.ExpressionWithTypeArguments);
-Node.isExternalModuleReference = Node.is(common.SyntaxKind.ExternalModuleReference);
-Node.isFalseKeyword = Node.is(common.SyntaxKind.FalseKeyword);
-Node.isForInStatement = Node.is(common.SyntaxKind.ForInStatement);
-Node.isForOfStatement = Node.is(common.SyntaxKind.ForOfStatement);
-Node.isForStatement = Node.is(common.SyntaxKind.ForStatement);
-Node.isFunctionDeclaration = Node.is(common.SyntaxKind.FunctionDeclaration);
-Node.isFunctionExpression = Node.is(common.SyntaxKind.FunctionExpression);
-Node.isHeritageClause = Node.is(common.SyntaxKind.HeritageClause);
-Node.isIdentifier = Node.is(common.SyntaxKind.Identifier);
-Node.isIfStatement = Node.is(common.SyntaxKind.IfStatement);
-Node.isImportClause = Node.is(common.SyntaxKind.ImportClause);
-Node.isImportDeclaration = Node.is(common.SyntaxKind.ImportDeclaration);
-Node.isImportEqualsDeclaration = Node.is(common.SyntaxKind.ImportEqualsDeclaration);
-Node.isImportSpecifier = Node.is(common.SyntaxKind.ImportSpecifier);
-Node.isInferKeyword = Node.is(common.SyntaxKind.InferKeyword);
-Node.isInterfaceDeclaration = Node.is(common.SyntaxKind.InterfaceDeclaration);
-Node.isJSDocAugmentsTag = Node.is(common.SyntaxKind.JSDocAugmentsTag);
-Node.isJSDocClassTag = Node.is(common.SyntaxKind.JSDocClassTag);
-Node.isJSDocFunctionType = Node.is(common.SyntaxKind.JSDocFunctionType);
-Node.isJSDocParameterTag = Node.is(common.SyntaxKind.JSDocParameterTag);
-Node.isJSDocPrivateTag = Node.is(common.SyntaxKind.JSDocPrivateTag);
-Node.isJSDocPropertyTag = Node.is(common.SyntaxKind.JSDocPropertyTag);
-Node.isJSDocProtectedTag = Node.is(common.SyntaxKind.JSDocProtectedTag);
-Node.isJSDocPublicTag = Node.is(common.SyntaxKind.JSDocPublicTag);
-Node.isJSDocReadonlyTag = Node.is(common.SyntaxKind.JSDocReadonlyTag);
-Node.isJSDocReturnTag = Node.is(common.SyntaxKind.JSDocReturnTag);
-Node.isJSDocSignature = Node.is(common.SyntaxKind.JSDocSignature);
-Node.isJSDocTemplateTag = Node.is(common.SyntaxKind.JSDocTemplateTag);
-Node.isJSDocThisTag = Node.is(common.SyntaxKind.JSDocThisTag);
-Node.isJSDocTypeExpression = Node.is(common.SyntaxKind.JSDocTypeExpression);
-Node.isJSDocTypeTag = Node.is(common.SyntaxKind.JSDocTypeTag);
-Node.isJSDocTypedefTag = Node.is(common.SyntaxKind.JSDocTypedefTag);
-Node.isJsxAttribute = Node.is(common.SyntaxKind.JsxAttribute);
-Node.isJsxClosingElement = Node.is(common.SyntaxKind.JsxClosingElement);
-Node.isJsxClosingFragment = Node.is(common.SyntaxKind.JsxClosingFragment);
-Node.isJsxElement = Node.is(common.SyntaxKind.JsxElement);
-Node.isJsxExpression = Node.is(common.SyntaxKind.JsxExpression);
-Node.isJsxFragment = Node.is(common.SyntaxKind.JsxFragment);
-Node.isJsxOpeningElement = Node.is(common.SyntaxKind.JsxOpeningElement);
-Node.isJsxOpeningFragment = Node.is(common.SyntaxKind.JsxOpeningFragment);
-Node.isJsxSelfClosingElement = Node.is(common.SyntaxKind.JsxSelfClosingElement);
-Node.isJsxSpreadAttribute = Node.is(common.SyntaxKind.JsxSpreadAttribute);
-Node.isJsxText = Node.is(common.SyntaxKind.JsxText);
-Node.isLabeledStatement = Node.is(common.SyntaxKind.LabeledStatement);
-Node.isMetaProperty = Node.is(common.SyntaxKind.MetaProperty);
-Node.isMethodDeclaration = Node.is(common.SyntaxKind.MethodDeclaration);
-Node.isMethodSignature = Node.is(common.SyntaxKind.MethodSignature);
-Node.isModuleBlock = Node.is(common.SyntaxKind.ModuleBlock);
-Node.isNamedExports = Node.is(common.SyntaxKind.NamedExports);
-Node.isNamedImports = Node.is(common.SyntaxKind.NamedImports);
-Node.isNamespaceExport = Node.is(common.SyntaxKind.NamespaceExport);
-Node.isNamespaceImport = Node.is(common.SyntaxKind.NamespaceImport);
-Node.isNeverKeyword = Node.is(common.SyntaxKind.NeverKeyword);
-Node.isNewExpression = Node.is(common.SyntaxKind.NewExpression);
-Node.isNoSubstitutionTemplateLiteral = Node.is(common.SyntaxKind.NoSubstitutionTemplateLiteral);
-Node.isNonNullExpression = Node.is(common.SyntaxKind.NonNullExpression);
-Node.isNotEmittedStatement = Node.is(common.SyntaxKind.NotEmittedStatement);
-Node.isNumberKeyword = Node.is(common.SyntaxKind.NumberKeyword);
-Node.isNumericLiteral = Node.is(common.SyntaxKind.NumericLiteral);
-Node.isObjectBindingPattern = Node.is(common.SyntaxKind.ObjectBindingPattern);
-Node.isObjectKeyword = Node.is(common.SyntaxKind.ObjectKeyword);
-Node.isObjectLiteralExpression = Node.is(common.SyntaxKind.ObjectLiteralExpression);
-Node.isOmittedExpression = Node.is(common.SyntaxKind.OmittedExpression);
-Node.isParenthesizedExpression = Node.is(common.SyntaxKind.ParenthesizedExpression);
-Node.isPartiallyEmittedExpression = Node.is(common.SyntaxKind.PartiallyEmittedExpression);
-Node.isPostfixUnaryExpression = Node.is(common.SyntaxKind.PostfixUnaryExpression);
-Node.isPrefixUnaryExpression = Node.is(common.SyntaxKind.PrefixUnaryExpression);
-Node.isPrivateIdentifier = Node.is(common.SyntaxKind.PrivateIdentifier);
-Node.isPropertyAccessExpression = Node.is(common.SyntaxKind.PropertyAccessExpression);
-Node.isPropertyAssignment = Node.is(common.SyntaxKind.PropertyAssignment);
-Node.isPropertyDeclaration = Node.is(common.SyntaxKind.PropertyDeclaration);
-Node.isPropertySignature = Node.is(common.SyntaxKind.PropertySignature);
-Node.isQualifiedName = Node.is(common.SyntaxKind.QualifiedName);
-Node.isRegularExpressionLiteral = Node.is(common.SyntaxKind.RegularExpressionLiteral);
-Node.isReturnStatement = Node.is(common.SyntaxKind.ReturnStatement);
-Node.isSemicolonToken = Node.is(common.SyntaxKind.SemicolonToken);
-Node.isShorthandPropertyAssignment = Node.is(common.SyntaxKind.ShorthandPropertyAssignment);
-Node.isSourceFile = Node.is(common.SyntaxKind.SourceFile);
-Node.isSpreadAssignment = Node.is(common.SyntaxKind.SpreadAssignment);
-Node.isSpreadElement = Node.is(common.SyntaxKind.SpreadElement);
-Node.isStringKeyword = Node.is(common.SyntaxKind.StringKeyword);
-Node.isStringLiteral = Node.is(common.SyntaxKind.StringLiteral);
-Node.isSwitchStatement = Node.is(common.SyntaxKind.SwitchStatement);
-Node.isSymbolKeyword = Node.is(common.SyntaxKind.SymbolKeyword);
-Node.isSyntaxList = Node.is(common.SyntaxKind.SyntaxList);
-Node.isTaggedTemplateExpression = Node.is(common.SyntaxKind.TaggedTemplateExpression);
-Node.isTemplateExpression = Node.is(common.SyntaxKind.TemplateExpression);
-Node.isTemplateHead = Node.is(common.SyntaxKind.TemplateHead);
-Node.isTemplateMiddle = Node.is(common.SyntaxKind.TemplateMiddle);
-Node.isTemplateSpan = Node.is(common.SyntaxKind.TemplateSpan);
-Node.isTemplateTail = Node.is(common.SyntaxKind.TemplateTail);
-Node.isThrowStatement = Node.is(common.SyntaxKind.ThrowStatement);
-Node.isTrueKeyword = Node.is(common.SyntaxKind.TrueKeyword);
-Node.isTryStatement = Node.is(common.SyntaxKind.TryStatement);
-Node.isTypeAliasDeclaration = Node.is(common.SyntaxKind.TypeAliasDeclaration);
-Node.isTypeOfExpression = Node.is(common.SyntaxKind.TypeOfExpression);
-Node.isUndefinedKeyword = Node.is(common.SyntaxKind.UndefinedKeyword);
-Node.isVariableDeclaration = Node.is(common.SyntaxKind.VariableDeclaration);
-Node.isVariableDeclarationList = Node.is(common.SyntaxKind.VariableDeclarationList);
-Node.isVariableStatement = Node.is(common.SyntaxKind.VariableStatement);
-Node.isVoidExpression = Node.is(common.SyntaxKind.VoidExpression);
-Node.isWhileStatement = Node.is(common.SyntaxKind.WhileStatement);
-Node.isWithStatement = Node.is(common.SyntaxKind.WithStatement);
-Node.isYieldExpression = Node.is(common.SyntaxKind.YieldExpression);
+Node.isAnyKeyword = Node.is(ts.SyntaxKind.AnyKeyword);
+Node.isArrayBindingPattern = Node.is(ts.SyntaxKind.ArrayBindingPattern);
+Node.isArrayLiteralExpression = Node.is(ts.SyntaxKind.ArrayLiteralExpression);
+Node.isArrowFunction = Node.is(ts.SyntaxKind.ArrowFunction);
+Node.isAsExpression = Node.is(ts.SyntaxKind.AsExpression);
+Node.isAwaitExpression = Node.is(ts.SyntaxKind.AwaitExpression);
+Node.isBigIntLiteral = Node.is(ts.SyntaxKind.BigIntLiteral);
+Node.isBinaryExpression = Node.is(ts.SyntaxKind.BinaryExpression);
+Node.isBindingElement = Node.is(ts.SyntaxKind.BindingElement);
+Node.isBlock = Node.is(ts.SyntaxKind.Block);
+Node.isBooleanKeyword = Node.is(ts.SyntaxKind.BooleanKeyword);
+Node.isBreakStatement = Node.is(ts.SyntaxKind.BreakStatement);
+Node.isCallExpression = Node.is(ts.SyntaxKind.CallExpression);
+Node.isCaseBlock = Node.is(ts.SyntaxKind.CaseBlock);
+Node.isCaseClause = Node.is(ts.SyntaxKind.CaseClause);
+Node.isCatchClause = Node.is(ts.SyntaxKind.CatchClause);
+Node.isClassDeclaration = Node.is(ts.SyntaxKind.ClassDeclaration);
+Node.isClassExpression = Node.is(ts.SyntaxKind.ClassExpression);
+Node.isCommaListExpression = Node.is(ts.SyntaxKind.CommaListExpression);
+Node.isComputedPropertyName = Node.is(ts.SyntaxKind.ComputedPropertyName);
+Node.isConditionalExpression = Node.is(ts.SyntaxKind.ConditionalExpression);
+Node.isContinueStatement = Node.is(ts.SyntaxKind.ContinueStatement);
+Node.isDebuggerStatement = Node.is(ts.SyntaxKind.DebuggerStatement);
+Node.isDecorator = Node.is(ts.SyntaxKind.Decorator);
+Node.isDefaultClause = Node.is(ts.SyntaxKind.DefaultClause);
+Node.isDeleteExpression = Node.is(ts.SyntaxKind.DeleteExpression);
+Node.isDoStatement = Node.is(ts.SyntaxKind.DoStatement);
+Node.isElementAccessExpression = Node.is(ts.SyntaxKind.ElementAccessExpression);
+Node.isEmptyStatement = Node.is(ts.SyntaxKind.EmptyStatement);
+Node.isEnumDeclaration = Node.is(ts.SyntaxKind.EnumDeclaration);
+Node.isEnumMember = Node.is(ts.SyntaxKind.EnumMember);
+Node.isExportAssignment = Node.is(ts.SyntaxKind.ExportAssignment);
+Node.isExportDeclaration = Node.is(ts.SyntaxKind.ExportDeclaration);
+Node.isExportSpecifier = Node.is(ts.SyntaxKind.ExportSpecifier);
+Node.isExpressionStatement = Node.is(ts.SyntaxKind.ExpressionStatement);
+Node.isExpressionWithTypeArguments = Node.is(ts.SyntaxKind.ExpressionWithTypeArguments);
+Node.isExternalModuleReference = Node.is(ts.SyntaxKind.ExternalModuleReference);
+Node.isFalseKeyword = Node.is(ts.SyntaxKind.FalseKeyword);
+Node.isForInStatement = Node.is(ts.SyntaxKind.ForInStatement);
+Node.isForOfStatement = Node.is(ts.SyntaxKind.ForOfStatement);
+Node.isForStatement = Node.is(ts.SyntaxKind.ForStatement);
+Node.isFunctionDeclaration = Node.is(ts.SyntaxKind.FunctionDeclaration);
+Node.isFunctionExpression = Node.is(ts.SyntaxKind.FunctionExpression);
+Node.isHeritageClause = Node.is(ts.SyntaxKind.HeritageClause);
+Node.isIdentifier = Node.is(ts.SyntaxKind.Identifier);
+Node.isIfStatement = Node.is(ts.SyntaxKind.IfStatement);
+Node.isImportClause = Node.is(ts.SyntaxKind.ImportClause);
+Node.isImportDeclaration = Node.is(ts.SyntaxKind.ImportDeclaration);
+Node.isImportEqualsDeclaration = Node.is(ts.SyntaxKind.ImportEqualsDeclaration);
+Node.isImportSpecifier = Node.is(ts.SyntaxKind.ImportSpecifier);
+Node.isInferKeyword = Node.is(ts.SyntaxKind.InferKeyword);
+Node.isInterfaceDeclaration = Node.is(ts.SyntaxKind.InterfaceDeclaration);
+Node.isJSDocAugmentsTag = Node.is(ts.SyntaxKind.JSDocAugmentsTag);
+Node.isJSDocClassTag = Node.is(ts.SyntaxKind.JSDocClassTag);
+Node.isJSDocFunctionType = Node.is(ts.SyntaxKind.JSDocFunctionType);
+Node.isJSDocParameterTag = Node.is(ts.SyntaxKind.JSDocParameterTag);
+Node.isJSDocPrivateTag = Node.is(ts.SyntaxKind.JSDocPrivateTag);
+Node.isJSDocPropertyTag = Node.is(ts.SyntaxKind.JSDocPropertyTag);
+Node.isJSDocProtectedTag = Node.is(ts.SyntaxKind.JSDocProtectedTag);
+Node.isJSDocPublicTag = Node.is(ts.SyntaxKind.JSDocPublicTag);
+Node.isJSDocReadonlyTag = Node.is(ts.SyntaxKind.JSDocReadonlyTag);
+Node.isJSDocReturnTag = Node.is(ts.SyntaxKind.JSDocReturnTag);
+Node.isJSDocSignature = Node.is(ts.SyntaxKind.JSDocSignature);
+Node.isJSDocTemplateTag = Node.is(ts.SyntaxKind.JSDocTemplateTag);
+Node.isJSDocThisTag = Node.is(ts.SyntaxKind.JSDocThisTag);
+Node.isJSDocTypeExpression = Node.is(ts.SyntaxKind.JSDocTypeExpression);
+Node.isJSDocTypeTag = Node.is(ts.SyntaxKind.JSDocTypeTag);
+Node.isJSDocTypedefTag = Node.is(ts.SyntaxKind.JSDocTypedefTag);
+Node.isJsxAttribute = Node.is(ts.SyntaxKind.JsxAttribute);
+Node.isJsxClosingElement = Node.is(ts.SyntaxKind.JsxClosingElement);
+Node.isJsxClosingFragment = Node.is(ts.SyntaxKind.JsxClosingFragment);
+Node.isJsxElement = Node.is(ts.SyntaxKind.JsxElement);
+Node.isJsxExpression = Node.is(ts.SyntaxKind.JsxExpression);
+Node.isJsxFragment = Node.is(ts.SyntaxKind.JsxFragment);
+Node.isJsxOpeningElement = Node.is(ts.SyntaxKind.JsxOpeningElement);
+Node.isJsxOpeningFragment = Node.is(ts.SyntaxKind.JsxOpeningFragment);
+Node.isJsxSelfClosingElement = Node.is(ts.SyntaxKind.JsxSelfClosingElement);
+Node.isJsxSpreadAttribute = Node.is(ts.SyntaxKind.JsxSpreadAttribute);
+Node.isJsxText = Node.is(ts.SyntaxKind.JsxText);
+Node.isLabeledStatement = Node.is(ts.SyntaxKind.LabeledStatement);
+Node.isMetaProperty = Node.is(ts.SyntaxKind.MetaProperty);
+Node.isMethodDeclaration = Node.is(ts.SyntaxKind.MethodDeclaration);
+Node.isMethodSignature = Node.is(ts.SyntaxKind.MethodSignature);
+Node.isModuleBlock = Node.is(ts.SyntaxKind.ModuleBlock);
+Node.isNamedExports = Node.is(ts.SyntaxKind.NamedExports);
+Node.isNamedImports = Node.is(ts.SyntaxKind.NamedImports);
+Node.isNamespaceExport = Node.is(ts.SyntaxKind.NamespaceExport);
+Node.isNamespaceImport = Node.is(ts.SyntaxKind.NamespaceImport);
+Node.isNeverKeyword = Node.is(ts.SyntaxKind.NeverKeyword);
+Node.isNewExpression = Node.is(ts.SyntaxKind.NewExpression);
+Node.isNoSubstitutionTemplateLiteral = Node.is(ts.SyntaxKind.NoSubstitutionTemplateLiteral);
+Node.isNonNullExpression = Node.is(ts.SyntaxKind.NonNullExpression);
+Node.isNotEmittedStatement = Node.is(ts.SyntaxKind.NotEmittedStatement);
+Node.isNumberKeyword = Node.is(ts.SyntaxKind.NumberKeyword);
+Node.isNumericLiteral = Node.is(ts.SyntaxKind.NumericLiteral);
+Node.isObjectBindingPattern = Node.is(ts.SyntaxKind.ObjectBindingPattern);
+Node.isObjectKeyword = Node.is(ts.SyntaxKind.ObjectKeyword);
+Node.isObjectLiteralExpression = Node.is(ts.SyntaxKind.ObjectLiteralExpression);
+Node.isOmittedExpression = Node.is(ts.SyntaxKind.OmittedExpression);
+Node.isParenthesizedExpression = Node.is(ts.SyntaxKind.ParenthesizedExpression);
+Node.isPartiallyEmittedExpression = Node.is(ts.SyntaxKind.PartiallyEmittedExpression);
+Node.isPostfixUnaryExpression = Node.is(ts.SyntaxKind.PostfixUnaryExpression);
+Node.isPrefixUnaryExpression = Node.is(ts.SyntaxKind.PrefixUnaryExpression);
+Node.isPrivateIdentifier = Node.is(ts.SyntaxKind.PrivateIdentifier);
+Node.isPropertyAccessExpression = Node.is(ts.SyntaxKind.PropertyAccessExpression);
+Node.isPropertyAssignment = Node.is(ts.SyntaxKind.PropertyAssignment);
+Node.isPropertyDeclaration = Node.is(ts.SyntaxKind.PropertyDeclaration);
+Node.isPropertySignature = Node.is(ts.SyntaxKind.PropertySignature);
+Node.isQualifiedName = Node.is(ts.SyntaxKind.QualifiedName);
+Node.isRegularExpressionLiteral = Node.is(ts.SyntaxKind.RegularExpressionLiteral);
+Node.isReturnStatement = Node.is(ts.SyntaxKind.ReturnStatement);
+Node.isSemicolonToken = Node.is(ts.SyntaxKind.SemicolonToken);
+Node.isShorthandPropertyAssignment = Node.is(ts.SyntaxKind.ShorthandPropertyAssignment);
+Node.isSourceFile = Node.is(ts.SyntaxKind.SourceFile);
+Node.isSpreadAssignment = Node.is(ts.SyntaxKind.SpreadAssignment);
+Node.isSpreadElement = Node.is(ts.SyntaxKind.SpreadElement);
+Node.isStringKeyword = Node.is(ts.SyntaxKind.StringKeyword);
+Node.isStringLiteral = Node.is(ts.SyntaxKind.StringLiteral);
+Node.isSwitchStatement = Node.is(ts.SyntaxKind.SwitchStatement);
+Node.isSymbolKeyword = Node.is(ts.SyntaxKind.SymbolKeyword);
+Node.isSyntaxList = Node.is(ts.SyntaxKind.SyntaxList);
+Node.isTaggedTemplateExpression = Node.is(ts.SyntaxKind.TaggedTemplateExpression);
+Node.isTemplateExpression = Node.is(ts.SyntaxKind.TemplateExpression);
+Node.isTemplateHead = Node.is(ts.SyntaxKind.TemplateHead);
+Node.isTemplateMiddle = Node.is(ts.SyntaxKind.TemplateMiddle);
+Node.isTemplateSpan = Node.is(ts.SyntaxKind.TemplateSpan);
+Node.isTemplateTail = Node.is(ts.SyntaxKind.TemplateTail);
+Node.isThrowStatement = Node.is(ts.SyntaxKind.ThrowStatement);
+Node.isTrueKeyword = Node.is(ts.SyntaxKind.TrueKeyword);
+Node.isTryStatement = Node.is(ts.SyntaxKind.TryStatement);
+Node.isTypeAliasDeclaration = Node.is(ts.SyntaxKind.TypeAliasDeclaration);
+Node.isTypeOfExpression = Node.is(ts.SyntaxKind.TypeOfExpression);
+Node.isUndefinedKeyword = Node.is(ts.SyntaxKind.UndefinedKeyword);
+Node.isVariableDeclaration = Node.is(ts.SyntaxKind.VariableDeclaration);
+Node.isVariableDeclarationList = Node.is(ts.SyntaxKind.VariableDeclarationList);
+Node.isVariableStatement = Node.is(ts.SyntaxKind.VariableStatement);
+Node.isVoidExpression = Node.is(ts.SyntaxKind.VoidExpression);
+Node.isWhileStatement = Node.is(ts.SyntaxKind.WhileStatement);
+Node.isWithStatement = Node.is(ts.SyntaxKind.WithStatement);
+Node.isYieldExpression = Node.is(ts.SyntaxKind.YieldExpression);
 function getWrappedCondition(thisNode, condition) {
     return condition == null ? undefined : ((c) => condition(thisNode._getNodeFromCompilerNode(c)));
 }
@@ -5424,8 +5449,8 @@ function* getCompilerDescendantsIterator(node, sourceFile) {
     }
 }
 function useParseTreeSearchForKind(thisNodeOrSyntaxKind, searchingKind) {
-    return searchingKind >= common.SyntaxKind.FirstNode && searchingKind < common.SyntaxKind.FirstJSDocNode
-        && getThisKind() !== common.SyntaxKind.SyntaxList;
+    return searchingKind >= ts.SyntaxKind.FirstNode && searchingKind < ts.SyntaxKind.FirstJSDocNode
+        && getThisKind() !== ts.SyntaxKind.SyntaxList;
     function getThisKind() {
         if (typeof thisNodeOrSyntaxKind === "number")
             return thisNodeOrSyntaxKind;
@@ -5482,8 +5507,8 @@ class SyntaxList extends Node {
 
 function setBodyTextForNode(body, textOrWriterFunction) {
     const newText = getBodyText(body._getWriterWithIndentation(), textOrWriterFunction);
-    const openBrace = body.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBraceToken);
-    const closeBrace = body.getFirstChildByKindOrThrow(common.SyntaxKind.CloseBraceToken);
+    const openBrace = body.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBraceToken);
+    const closeBrace = body.getFirstChildByKindOrThrow(ts.SyntaxKind.CloseBraceToken);
     insertIntoParentTextRange({
         insertPos: openBrace.getEnd(),
         newText,
@@ -5537,7 +5562,7 @@ function BodyableNode(Base) {
             var _a;
             if (this.hasBody())
                 return this;
-            const semiColon = this.getLastChildByKind(common.SyntaxKind.SemicolonToken);
+            const semiColon = this.getLastChildByKind(ts.SyntaxKind.SemicolonToken);
             insertIntoParentTextRange({
                 parent: this,
                 insertPos: semiColon == null ? this.getEnd() : semiColon.getStart(),
@@ -5660,7 +5685,7 @@ function getDecoratorFormattingKind(parent, currentDecorators) {
 }
 function areDecoratorsOnSameLine(parent, currentDecorators) {
     if (currentDecorators.length <= 1)
-        return parent.getKind() === common.SyntaxKind.Parameter;
+        return parent.getKind() === ts.SyntaxKind.Parameter;
     const startLinePos = currentDecorators[0].getStartLinePos();
     for (let i = 1; i < currentDecorators.length; i++) {
         if (currentDecorators[i].getStartLinePos() !== startLinePos)
@@ -5688,7 +5713,7 @@ function ExclamationTokenableNode(Base) {
             if (value) {
                 if (Node.isQuestionTokenableNode(this))
                     this.setHasQuestionToken(false);
-                const colonNode = this.getFirstChildByKind(common.SyntaxKind.ColonToken);
+                const colonNode = this.getFirstChildByKind(ts.SyntaxKind.ColonToken);
                 if (colonNode == null)
                     throw new common.errors.InvalidOperationError("Cannot add an exclamation token to a node that does not have a type.");
                 insertIntoParentTextRange({
@@ -5786,7 +5811,7 @@ function ModifierableNode(Base) {
                     if (modifiers.length > 0)
                         return modifiers[0].getStart();
                     for (const child of node._getChildrenIterator()) {
-                        if (child.getKind() === common.SyntaxKind.SyntaxList || common.ts.isJSDocCommentContainingNode(child.compilerNode))
+                        if (child.getKind() === ts.SyntaxKind.SyntaxList || ts.isJSDocCommentContainingNode(child.compilerNode))
                             continue;
                         return child.getStart();
                     }
@@ -5849,7 +5874,7 @@ function ExportGetableNode(Base) {
             }
             if (!Node.isModifierableNode(this))
                 return throwForNotModifierableNode();
-            return this.getFirstModifierByKind(common.SyntaxKind.ExportKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.ExportKeyword);
         }
         getExportKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getExportKeyword(), "Expected to find an export keyword.");
@@ -5864,7 +5889,7 @@ function ExportGetableNode(Base) {
             }
             if (!Node.isModifierableNode(this))
                 return throwForNotModifierableNode();
-            return this.getFirstModifierByKind(common.SyntaxKind.DefaultKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.DefaultKeyword);
         }
         getDefaultKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getDefaultKeyword(), "Expected to find a default keyword.");
@@ -5928,7 +5953,7 @@ function apply(Base) {
             if (!value)
                 return this;
             if (Node.hasName(this) && shouldWriteAsSeparateStatement.call(this)) {
-                const parentSyntaxList = this.getFirstAncestorByKindOrThrow(common.SyntaxKind.SyntaxList);
+                const parentSyntaxList = this.getFirstAncestorByKindOrThrow(ts.SyntaxKind.SyntaxList);
                 const name = this.getName();
                 parentSyntaxList.insertChildText(this.getChildIndex() + 1, writer => {
                     writer.newLine().write(`export default ${name};`);
@@ -8098,7 +8123,7 @@ function ExtendsClauseableNode(Base) {
     return class extends Base {
         getExtends() {
             var _a;
-            const extendsClause = this.getHeritageClauseByKind(common.SyntaxKind.ExtendsKeyword);
+            const extendsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ExtendsKeyword);
             return (_a = extendsClause === null || extendsClause === void 0 ? void 0 : extendsClause.getTypeNodes()) !== null && _a !== void 0 ? _a : [];
         }
         addExtends(text) {
@@ -8119,9 +8144,9 @@ function ExtendsClauseableNode(Base) {
             structurePrinter.printText(writer, texts);
             index = verifyAndGetIndex(index, originalExtends.length);
             if (originalExtends.length > 0) {
-                const extendsClause = this.getHeritageClauseByKindOrThrow(common.SyntaxKind.ExtendsKeyword);
+                const extendsClause = this.getHeritageClauseByKindOrThrow(ts.SyntaxKind.ExtendsKeyword);
                 insertIntoCommaSeparatedNodes({
-                    parent: extendsClause.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                    parent: extendsClause.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
                     currentNodes: originalExtends,
                     insertIndex: index,
                     newText: writer.toString(),
@@ -8129,7 +8154,7 @@ function ExtendsClauseableNode(Base) {
                 });
             }
             else {
-                const openBraceToken = this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBraceToken);
+                const openBraceToken = this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBraceToken);
                 const openBraceStart = openBraceToken.getStart();
                 const isLastSpace = /\s/.test(this.getSourceFile().getFullText()[openBraceStart - 1]);
                 let insertText = `extends ${writer.toString()} `;
@@ -8145,7 +8170,7 @@ function ExtendsClauseableNode(Base) {
             return wasStringInput ? newExtends[index] : getNodesToReturn(originalExtends, newExtends, index, false);
         }
         removeExtends(implementsNodeOrIndex) {
-            const extendsClause = this.getHeritageClauseByKind(common.SyntaxKind.ExtendsKeyword);
+            const extendsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ExtendsKeyword);
             if (extendsClause == null)
                 throw new common.errors.InvalidOperationError("Cannot remove an extends when none exist.");
             extendsClause.removeExpression(implementsNodeOrIndex);
@@ -8212,8 +8237,8 @@ function GeneratorableNode(Base) {
     };
 }
 function getAsteriskInsertPos(node) {
-    if (node.getKind() === common.SyntaxKind.FunctionDeclaration)
-        return node.getFirstChildByKindOrThrow(common.SyntaxKind.FunctionKeyword).getEnd();
+    if (node.getKind() === ts.SyntaxKind.FunctionDeclaration)
+        return node.getFirstChildByKindOrThrow(ts.SyntaxKind.FunctionKeyword).getEnd();
     const namedNode = node;
     if (namedNode.getName == null)
         throw new common.errors.NotImplementedError("Expected a name node for a non-function declaration.");
@@ -8240,7 +8265,7 @@ function ImplementsClauseableNode(Base) {
     return class extends Base {
         getImplements() {
             var _a;
-            const implementsClause = this.getHeritageClauseByKind(common.SyntaxKind.ImplementsKeyword);
+            const implementsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ImplementsKeyword);
             return (_a = implementsClause === null || implementsClause === void 0 ? void 0 : implementsClause.getTypeNodes()) !== null && _a !== void 0 ? _a : [];
         }
         addImplements(text) {
@@ -8262,9 +8287,9 @@ function ImplementsClauseableNode(Base) {
             const heritageClauses = this.getHeritageClauses();
             index = verifyAndGetIndex(index, originalImplements.length);
             if (originalImplements.length > 0) {
-                const implementsClause = this.getHeritageClauseByKindOrThrow(common.SyntaxKind.ImplementsKeyword);
+                const implementsClause = this.getHeritageClauseByKindOrThrow(ts.SyntaxKind.ImplementsKeyword);
                 insertIntoCommaSeparatedNodes({
-                    parent: implementsClause.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                    parent: implementsClause.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
                     currentNodes: originalImplements,
                     insertIndex: index,
                     newText: writer.toString(),
@@ -8272,7 +8297,7 @@ function ImplementsClauseableNode(Base) {
                 });
             }
             else {
-                const openBraceToken = this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBraceToken);
+                const openBraceToken = this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBraceToken);
                 const openBraceStart = openBraceToken.getStart();
                 const isLastSpace = /\s/.test(this.getSourceFile().getFullText()[openBraceStart - 1]);
                 let insertText = `implements ${writer.toString()} `;
@@ -8288,7 +8313,7 @@ function ImplementsClauseableNode(Base) {
             return wasStringInput ? newImplements[0] : getNodesToReturn(originalImplements, newImplements, index, false);
         }
         removeImplements(implementsNodeOrIndex) {
-            const implementsClause = this.getHeritageClauseByKind(common.SyntaxKind.ImplementsKeyword);
+            const implementsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ImplementsKeyword);
             if (implementsClause == null)
                 throw new common.errors.InvalidOperationError("Cannot remove an implements when none exist.");
             implementsClause.removeExpression(implementsNodeOrIndex);
@@ -8342,7 +8367,7 @@ function apply$1(Base) {
             const initializer = this.getInitializer();
             if (initializer == null)
                 return this;
-            const previousSibling = initializer.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.EqualsToken);
+            const previousSibling = initializer.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.EqualsToken);
             removeChildren({
                 children: [previousSibling, initializer],
                 removePrecedingSpaces: true,
@@ -8354,7 +8379,7 @@ function apply$1(Base) {
             common.errors.throwIfWhitespaceOrNotString(text, "textOrWriterFunction");
             if (this.hasInitializer())
                 this.removeInitializer();
-            const semiColonToken = this.getLastChildIfKind(common.SyntaxKind.SemicolonToken);
+            const semiColonToken = this.getLastChildIfKind(ts.SyntaxKind.SemicolonToken);
             insertIntoParentTextRange({
                 insertPos: semiColonToken != null ? semiColonToken.getPos() : this.getEnd(),
                 parent: this,
@@ -8456,11 +8481,11 @@ function ModuledNode(Base) {
                 let wasLastComment = true;
                 for (let i = 0; i < compilerChildren.length; i++) {
                     const child = compilerChildren[i];
-                    if (wasLastComment && child.kind === common.SyntaxKind.MultiLineCommentTrivia)
+                    if (wasLastComment && child.kind === ts.SyntaxKind.MultiLineCommentTrivia)
                         insertIndex = i + 1;
                     else {
                         wasLastComment = false;
-                        if (child.kind === common.SyntaxKind.ImportDeclaration)
+                        if (child.kind === ts.SyntaxKind.ImportDeclaration)
                             insertIndex = i + 1;
                     }
                 }
@@ -8472,7 +8497,7 @@ function ModuledNode(Base) {
         }
         insertImportDeclarations(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.ImportDeclaration,
+                expectedKind: ts.SyntaxKind.ImportDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -8511,7 +8536,7 @@ function ModuledNode(Base) {
         }
         insertExportDeclarations(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.ExportDeclaration,
+                expectedKind: ts.SyntaxKind.ExportDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -8550,7 +8575,7 @@ function ModuledNode(Base) {
         }
         insertExportAssignments(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.ExportAssignment,
+                expectedKind: ts.SyntaxKind.ExportAssignment,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -8607,7 +8632,7 @@ function ModuledNode(Base) {
                 }
                 else if (Node.isExportAssignment(declaration)) {
                     const expression = declaration.getExpression();
-                    if (expression == null || expression.getKind() !== common.SyntaxKind.Identifier) {
+                    if (expression == null || expression.getKind() !== ts.SyntaxKind.Identifier) {
                         yield expression;
                         return;
                     }
@@ -8651,7 +8676,7 @@ function ModuledNode(Base) {
             if (defaultExportSymbol == null)
                 return this;
             const declaration = defaultExportSymbol.getDeclarations()[0];
-            if (declaration.compilerNode.kind === common.SyntaxKind.ExportAssignment)
+            if (declaration.compilerNode.kind === ts.SyntaxKind.ExportAssignment)
                 removeChildrenWithFormatting({ children: [declaration], getSiblingFormatting: () => FormattingKind.Newline });
             else if (Node.isModifierableNode(declaration)) {
                 declaration.toggleModifier("default", false);
@@ -8815,7 +8840,7 @@ function NameableNodeInternal(Base) {
 }
 function addNameNode(node, newName) {
     if (Node.isClassDeclaration(node) || Node.isClassExpression(node)) {
-        const classKeyword = node.getFirstChildByKindOrThrow(common.SyntaxKind.ClassKeyword);
+        const classKeyword = node.getFirstChildByKindOrThrow(ts.SyntaxKind.ClassKeyword);
         insertIntoParentTextRange({
             insertPos: classKeyword.getEnd(),
             newText: " " + newName,
@@ -8823,7 +8848,7 @@ function addNameNode(node, newName) {
         });
     }
     else {
-        const openParenToken = node.getFirstChildByKindOrThrow(common.SyntaxKind.OpenParenToken);
+        const openParenToken = node.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenParenToken);
         insertIntoParentTextRange({
             insertPos: openParenToken.getStart(),
             newText: " " + newName,
@@ -8866,7 +8891,7 @@ function ParameteredNode(Base) {
             if (common.ArrayUtils.isNullOrEmpty(structures))
                 return [];
             const parameters = this.getParameters();
-            const syntaxList = this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenParenToken).getNextSiblingIfKindOrThrow(common.SyntaxKind.SyntaxList);
+            const syntaxList = this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenParenToken).getNextSiblingIfKindOrThrow(ts.SyntaxKind.SyntaxList);
             index = verifyAndGetIndex(index, parameters.length);
             const writer = this._getWriterWithQueuedChildIndentation();
             const structurePrinter = this._context.structurePrinterFactory.forParameterDeclaration();
@@ -8914,7 +8939,7 @@ function QuestionDotTokenableNode(Base) {
                 return this;
             if (value) {
                 if (Node.isPropertyAccessExpression(this))
-                    this.getFirstChildByKindOrThrow(common.SyntaxKind.DotToken).replaceWithText("?.");
+                    this.getFirstChildByKindOrThrow(ts.SyntaxKind.DotToken).replaceWithText("?.");
                 else {
                     insertIntoParentTextRange({
                         insertPos: getInsertPos.call(this),
@@ -8932,9 +8957,9 @@ function QuestionDotTokenableNode(Base) {
             return this;
             function getInsertPos() {
                 if (Node.isCallExpression(this))
-                    return this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenParenToken).getStart();
+                    return this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenParenToken).getStart();
                 if (Node.isElementAccessExpression(this))
-                    return this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBracketToken).getStart();
+                    return this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBracketToken).getStart();
                 common.errors.throwNotImplementedForSyntaxKindError(this.compilerNode.kind);
             }
         }
@@ -8984,10 +9009,10 @@ function QuestionTokenableNode(Base) {
             function getInsertPos() {
                 if (Node.hasName(this))
                     return this.getNameNode().getEnd();
-                const colonNode = this.getFirstChildByKind(common.SyntaxKind.ColonToken);
+                const colonNode = this.getFirstChildByKind(ts.SyntaxKind.ColonToken);
                 if (colonNode != null)
                     return colonNode.getStart();
-                const semicolonToken = this.getLastChildByKind(common.SyntaxKind.SemicolonToken);
+                const semicolonToken = this.getLastChildByKind(ts.SyntaxKind.SemicolonToken);
                 if (semicolonToken != null)
                     return semicolonToken.getStart();
                 return this.getEnd();
@@ -9013,7 +9038,7 @@ function ReadonlyableNode(Base) {
             return this.getReadonlyKeyword() != null;
         }
         getReadonlyKeyword() {
-            return this.getFirstModifierByKind(common.SyntaxKind.ReadonlyKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.ReadonlyKeyword);
         }
         getReadonlyKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getReadonlyKeyword(), "Expected to find a readonly keyword.");
@@ -9064,16 +9089,16 @@ function ReturnTypedNode(Base) {
             });
             return this;
             function getEndNode(thisNode) {
-                if (thisNode.getKind() === common.SyntaxKind.IndexSignature)
-                    return thisNode.getFirstChildByKindOrThrow(common.SyntaxKind.CloseBracketToken);
-                return thisNode.getFirstChildByKindOrThrow(common.SyntaxKind.CloseParenToken);
+                if (thisNode.getKind() === ts.SyntaxKind.IndexSignature)
+                    return thisNode.getFirstChildByKindOrThrow(ts.SyntaxKind.CloseBracketToken);
+                return thisNode.getFirstChildByKindOrThrow(ts.SyntaxKind.CloseParenToken);
             }
         }
         removeReturnType() {
             const returnTypeNode = this.getReturnTypeNode();
             if (returnTypeNode == null)
                 return this;
-            const colonToken = returnTypeNode.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.ColonToken);
+            const colonToken = returnTypeNode.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.ColonToken);
             removeChildren({ children: [colonToken, returnTypeNode], removePrecedingSpaces: true });
             return this;
         }
@@ -9138,11 +9163,11 @@ function ScopeableNode(Base) {
 }
 function getScopeForNode(node) {
     const modifierFlags = node.getCombinedModifierFlags();
-    if ((modifierFlags & common.ts.ModifierFlags.Private) !== 0)
+    if ((modifierFlags & ts.ModifierFlags.Private) !== 0)
         return exports.Scope.Private;
-    else if ((modifierFlags & common.ts.ModifierFlags.Protected) !== 0)
+    else if ((modifierFlags & ts.ModifierFlags.Protected) !== 0)
         return exports.Scope.Protected;
-    else if ((modifierFlags & common.ts.ModifierFlags.Public) !== 0)
+    else if ((modifierFlags & ts.ModifierFlags.Public) !== 0)
         return exports.Scope.Public;
     else
         return undefined;
@@ -9186,10 +9211,10 @@ function SignaturedDeclaration(Base) {
 function StaticableNode(Base) {
     return class extends Base {
         isStatic() {
-            return this.hasModifier(common.SyntaxKind.StaticKeyword);
+            return this.hasModifier(ts.SyntaxKind.StaticKeyword);
         }
         getStaticKeyword() {
-            return this.getFirstModifierByKind(common.SyntaxKind.StaticKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.StaticKeyword);
         }
         getStaticKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getStaticKeyword(), "Expected to find a static keyword.");
@@ -9258,8 +9283,8 @@ function TextInsertableNode(Base) {
 }
 function getValidRange(thisNode) {
     const rangeNode = getRangeNode();
-    const openBrace = Node.isSourceFile(rangeNode) ? undefined : rangeNode.getPreviousSiblingIfKind(common.SyntaxKind.OpenBraceToken);
-    const closeBrace = openBrace == null ? undefined : rangeNode.getNextSiblingIfKind(common.SyntaxKind.CloseBraceToken);
+    const openBrace = Node.isSourceFile(rangeNode) ? undefined : rangeNode.getPreviousSiblingIfKind(ts.SyntaxKind.OpenBraceToken);
+    const closeBrace = openBrace == null ? undefined : rangeNode.getNextSiblingIfKind(ts.SyntaxKind.CloseBraceToken);
     if (openBrace != null && closeBrace != null)
         return [openBrace.getEnd(), closeBrace.getStart()];
     else
@@ -9293,7 +9318,7 @@ function TypeArgumentedNode(Base) {
             const typeArguments = this.getTypeArguments();
             index = verifyAndGetIndex(index, typeArguments.length);
             if (typeArguments.length === 0) {
-                const identifier = this.getFirstChildByKindOrThrow(common.SyntaxKind.Identifier);
+                const identifier = this.getFirstChildByKindOrThrow(ts.SyntaxKind.Identifier);
                 insertIntoParentTextRange({
                     insertPos: identifier.getEnd(),
                     parent: this,
@@ -9302,7 +9327,7 @@ function TypeArgumentedNode(Base) {
             }
             else {
                 insertIntoCommaSeparatedNodes({
-                    parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.LessThanToken).getNextSiblingIfKindOrThrow(common.SyntaxKind.SyntaxList),
+                    parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.LessThanToken).getNextSiblingIfKindOrThrow(ts.SyntaxKind.SyntaxList),
                     currentNodes: typeArguments,
                     insertIndex: index,
                     newText: argumentTexts.join(", "),
@@ -9320,9 +9345,9 @@ function TypeArgumentedNode(Base) {
                 const childSyntaxList = typeArguments[0].getParentSyntaxListOrThrow();
                 removeChildren({
                     children: [
-                        childSyntaxList.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.LessThanToken),
+                        childSyntaxList.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.LessThanToken),
                         childSyntaxList,
-                        childSyntaxList.getNextSiblingIfKindOrThrow(common.SyntaxKind.GreaterThanToken),
+                        childSyntaxList.getNextSiblingIfKindOrThrow(ts.SyntaxKind.GreaterThanToken),
                     ],
                 });
             }
@@ -9358,7 +9383,7 @@ function TypedNode(Base) {
             let newText;
             if (separatorNode == null) {
                 insertPos = getInsertPosWhenNoType(this);
-                newText = (separatorSyntaxKind === common.SyntaxKind.EqualsToken ? " = " : ": ") + text;
+                newText = (separatorSyntaxKind === ts.SyntaxKind.EqualsToken ? " = " : ": ") + text;
             }
             else {
                 insertPos = typeNode.getStart();
@@ -9374,7 +9399,7 @@ function TypedNode(Base) {
             });
             return this;
             function getInsertPosWhenNoType(node) {
-                const identifier = node.getFirstChildByKindOrThrow(common.SyntaxKind.Identifier);
+                const identifier = node.getFirstChildByKindOrThrow(ts.SyntaxKind.Identifier);
                 const nextSibling = identifier.getNextSibling();
                 const insertAfterNode = isQuestionOrExclamation(nextSibling) ? nextSibling : identifier;
                 return insertAfterNode.getEnd();
@@ -9383,7 +9408,7 @@ function TypedNode(Base) {
                 if (node == null)
                     return false;
                 const kind = node.getKind();
-                return kind === common.SyntaxKind.QuestionToken || kind === common.SyntaxKind.ExclamationToken;
+                return kind === ts.SyntaxKind.QuestionToken || kind === ts.SyntaxKind.ExclamationToken;
             }
         }
         set(structure) {
@@ -9395,7 +9420,7 @@ function TypedNode(Base) {
             return this;
         }
         removeType() {
-            if (this.getKind() === common.SyntaxKind.TypeAliasDeclaration)
+            if (this.getKind() === ts.SyntaxKind.TypeAliasDeclaration)
                 throw new common.errors.NotSupportedError(`Cannot remove the type of a type alias. Use ${"setType"} instead.`);
             const typeNode = this.getTypeNode();
             if (typeNode == null)
@@ -9414,10 +9439,10 @@ function TypedNode(Base) {
 }
 function getSeparatorSyntaxKindForNode(node) {
     switch (node.getKind()) {
-        case common.SyntaxKind.TypeAliasDeclaration:
-            return common.SyntaxKind.EqualsToken;
+        case ts.SyntaxKind.TypeAliasDeclaration:
+            return ts.SyntaxKind.EqualsToken;
         default:
-            return common.SyntaxKind.ColonToken;
+            return ts.SyntaxKind.ColonToken;
     }
 }
 
@@ -9461,7 +9486,7 @@ function TypeElementMemberedNode(Base) {
                 thisNode: this,
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.ConstructSignature,
+                expectedKind: ts.SyntaxKind.ConstructSignature,
                 createStructurePrinter: () => this._context.structurePrinterFactory.forConstructSignatureDeclaration(),
             });
         }
@@ -9472,7 +9497,7 @@ function TypeElementMemberedNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getConstructSignature(findFunction), "Expected to find a construct signature with the provided condition.");
         }
         getConstructSignatures() {
-            return this.compilerNode.members.filter(m => m.kind === common.SyntaxKind.ConstructSignature)
+            return this.compilerNode.members.filter(m => m.kind === ts.SyntaxKind.ConstructSignature)
                 .map(m => this._getNodeFromCompilerNode(m));
         }
         addCallSignature(structure) {
@@ -9489,7 +9514,7 @@ function TypeElementMemberedNode(Base) {
                 thisNode: this,
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.CallSignature,
+                expectedKind: ts.SyntaxKind.CallSignature,
                 createStructurePrinter: () => this._context.structurePrinterFactory.forCallSignatureDeclaration(),
             });
         }
@@ -9500,7 +9525,7 @@ function TypeElementMemberedNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getCallSignature(findFunction), "Expected to find a call signature with the provided condition.");
         }
         getCallSignatures() {
-            return this.compilerNode.members.filter(m => m.kind === common.SyntaxKind.CallSignature)
+            return this.compilerNode.members.filter(m => m.kind === ts.SyntaxKind.CallSignature)
                 .map(m => this._getNodeFromCompilerNode(m));
         }
         addIndexSignature(structure) {
@@ -9517,7 +9542,7 @@ function TypeElementMemberedNode(Base) {
                 thisNode: this,
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.IndexSignature,
+                expectedKind: ts.SyntaxKind.IndexSignature,
                 createStructurePrinter: () => this._context.structurePrinterFactory.forIndexSignatureDeclaration(),
             });
         }
@@ -9528,7 +9553,7 @@ function TypeElementMemberedNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getIndexSignature(findFunction), "Expected to find a index signature with the provided condition.");
         }
         getIndexSignatures() {
-            return this.compilerNode.members.filter(m => m.kind === common.SyntaxKind.IndexSignature)
+            return this.compilerNode.members.filter(m => m.kind === ts.SyntaxKind.IndexSignature)
                 .map(m => this._getNodeFromCompilerNode(m));
         }
         addMethod(structure) {
@@ -9545,7 +9570,7 @@ function TypeElementMemberedNode(Base) {
                 thisNode: this,
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.MethodSignature,
+                expectedKind: ts.SyntaxKind.MethodSignature,
                 createStructurePrinter: () => this._context.structurePrinterFactory.forMethodSignature(),
             });
         }
@@ -9556,7 +9581,7 @@ function TypeElementMemberedNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getMethod(nameOrFindFunction), () => getNotFoundErrorMessageForNameOrFindFunction("interface method signature", nameOrFindFunction));
         }
         getMethods() {
-            return this.compilerNode.members.filter(m => m.kind === common.SyntaxKind.MethodSignature)
+            return this.compilerNode.members.filter(m => m.kind === ts.SyntaxKind.MethodSignature)
                 .map(m => this._getNodeFromCompilerNode(m));
         }
         addProperty(structure) {
@@ -9573,7 +9598,7 @@ function TypeElementMemberedNode(Base) {
                 thisNode: this,
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.PropertySignature,
+                expectedKind: ts.SyntaxKind.PropertySignature,
                 createStructurePrinter: () => this._context.structurePrinterFactory.forPropertySignature(),
             });
         }
@@ -9584,7 +9609,7 @@ function TypeElementMemberedNode(Base) {
             return common.errors.throwIfNullOrUndefined(this.getProperty(nameOrFindFunction), () => getNotFoundErrorMessageForNameOrFindFunction("interface property signature", nameOrFindFunction));
         }
         getProperties() {
-            return this.compilerNode.members.filter(m => m.kind === common.SyntaxKind.PropertySignature)
+            return this.compilerNode.members.filter(m => m.kind === ts.SyntaxKind.PropertySignature)
                 .map(m => this._getNodeFromCompilerNode(m));
         }
         getMembers() {
@@ -9685,7 +9710,7 @@ function TypeParameteredNode(Base) {
             }
             else {
                 insertIntoCommaSeparatedNodes({
-                    parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.LessThanToken).getNextSiblingIfKindOrThrow(common.SyntaxKind.SyntaxList),
+                    parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.LessThanToken).getNextSiblingIfKindOrThrow(ts.SyntaxKind.SyntaxList),
                     currentNodes: typeParameters,
                     insertIndex: index,
                     newText: writer.toString(),
@@ -9714,7 +9739,7 @@ function getInsertPos(node) {
     if (namedNode.getNameNode != null)
         return namedNode.getNameNode().getEnd();
     else if (Node.isCallSignatureDeclaration(node) || Node.isFunctionTypeNode(node))
-        return node.getFirstChildByKindOrThrow(common.SyntaxKind.OpenParenToken).getStart();
+        return node.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenParenToken).getStart();
     else
         throw new common.errors.NotImplementedError(`Not implemented scenario inserting type parameters for node with kind ${node.getKindName()}.`);
 }
@@ -9762,7 +9787,7 @@ function AbstractableNode(Base) {
             return this.getAbstractKeyword() != null;
         }
         getAbstractKeyword() {
-            return this.getFirstModifierByKind(common.SyntaxKind.AbstractKeyword);
+            return this.getFirstModifierByKind(ts.SyntaxKind.AbstractKeyword);
         }
         getAbstractKeywordOrThrow() {
             return common.errors.throwIfNullOrUndefined(this.getAbstractKeyword(), "Expected to find an abstract keyword.");
@@ -9845,7 +9870,7 @@ class ArrayLiteralExpression extends PrimaryExpression {
         return insertTexts(this);
         function insertTexts(node) {
             insertIntoCommaSeparatedNodes({
-                parent: node.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                parent: node.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
                 currentNodes: elements,
                 insertIndex: index,
                 newText: writer.toString(),
@@ -10151,7 +10176,7 @@ class ObjectLiteralExpression extends ObjectLiteralExpressionBase {
         const oldProperties = this.getPropertiesWithComments();
         structurePrinter.printText(writer, structures);
         insertIntoCommaSeparatedNodes({
-            parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+            parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
             currentNodes: oldProperties,
             insertIndex: index,
             newText: writer.toString(),
@@ -10167,7 +10192,7 @@ const PropertyAssignmentBase = createBase$5(ObjectLiteralElement);
 class PropertyAssignment extends PropertyAssignmentBase {
     removeInitializer() {
         const initializer = this.getInitializerOrThrow();
-        const colonToken = initializer.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.ColonToken);
+        const colonToken = initializer.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.ColonToken);
         const childIndex = this.getChildIndex();
         const sourceFileText = this._sourceFile.getFullText();
         const insertPos = this.getStart();
@@ -10181,7 +10206,7 @@ class PropertyAssignment extends PropertyAssignmentBase {
                 textLength: this.getWidth(),
             },
         });
-        return parent.getChildAtIndexIfKindOrThrow(childIndex, common.SyntaxKind.ShorthandPropertyAssignment);
+        return parent.getChildAtIndexIfKindOrThrow(childIndex, ts.SyntaxKind.ShorthandPropertyAssignment);
     }
     setInitializer(textOrWriterFunction) {
         const initializer = this.getInitializerOrThrow();
@@ -10255,7 +10280,7 @@ class ShorthandPropertyAssignment extends ShorthandPropertyAssignmentBase {
                 textLength: this.getWidth(),
             },
         });
-        return parent.getChildAtIndexIfKindOrThrow(childIndex, common.SyntaxKind.PropertyAssignment);
+        return parent.getChildAtIndexIfKindOrThrow(childIndex, ts.SyntaxKind.PropertyAssignment);
     }
     set(structure) {
         callBaseSet(ShorthandPropertyAssignmentBase.prototype, this, structure);
@@ -10400,7 +10425,7 @@ function StatementedNode(Base) {
             function getChildSyntaxList() {
                 const childSyntaxList = this.getChildSyntaxListOrThrow();
                 if (Node.isCaseClause(this) || Node.isDefaultClause(this)) {
-                    const block = childSyntaxList.getFirstChildIfKind(common.SyntaxKind.Block);
+                    const block = childSyntaxList.getFirstChildIfKind(ts.SyntaxKind.Block);
                     if (block != null)
                         return block.getChildSyntaxListOrThrow();
                 }
@@ -10428,7 +10453,7 @@ function StatementedNode(Base) {
         }
         insertClasses(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.ClassDeclaration,
+                expectedKind: ts.SyntaxKind.ClassDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10459,7 +10484,7 @@ function StatementedNode(Base) {
         }
         insertEnums(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.EnumDeclaration,
+                expectedKind: ts.SyntaxKind.EnumDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10489,7 +10514,7 @@ function StatementedNode(Base) {
         }
         insertFunctions(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.FunctionDeclaration,
+                expectedKind: ts.SyntaxKind.FunctionDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10528,7 +10553,7 @@ function StatementedNode(Base) {
         }
         insertInterfaces(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.InterfaceDeclaration,
+                expectedKind: ts.SyntaxKind.InterfaceDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10558,7 +10583,7 @@ function StatementedNode(Base) {
         }
         insertNamespaces(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.ModuleDeclaration,
+                expectedKind: ts.SyntaxKind.ModuleDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10589,7 +10614,7 @@ function StatementedNode(Base) {
         }
         insertTypeAliases(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.TypeAliasDeclaration,
+                expectedKind: ts.SyntaxKind.TypeAliasDeclaration,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10636,7 +10661,7 @@ function StatementedNode(Base) {
         }
         insertVariableStatements(index, structures) {
             return this._insertChildren({
-                expectedKind: common.SyntaxKind.VariableStatement,
+                expectedKind: ts.SyntaxKind.VariableStatement,
                 index,
                 structures,
                 write: (writer, info) => {
@@ -10902,7 +10927,7 @@ class IfStatement extends Statement {
     remove() {
         const nodes = [];
         if (Node.isIfStatement(this.getParentOrThrow()))
-            nodes.push(this.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.ElseKeyword));
+            nodes.push(this.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.ElseKeyword));
         nodes.push(this);
         removeStatementedNodeChildren(nodes);
     }
@@ -10989,9 +11014,9 @@ class ExportAssignment extends ExportAssignmentBase {
         if (this.isExportEquals() === value)
             return this;
         if (value)
-            this.getFirstChildByKindOrThrow(common.SyntaxKind.DefaultKeyword).replaceWithText("=");
+            this.getFirstChildByKindOrThrow(ts.SyntaxKind.DefaultKeyword).replaceWithText("=");
         else
-            this.getFirstChildByKindOrThrow(common.SyntaxKind.EqualsToken).replaceWithText("default");
+            this.getFirstChildByKindOrThrow(ts.SyntaxKind.EqualsToken).replaceWithText("default");
         return this;
     }
     getExpression() {
@@ -11030,12 +11055,12 @@ class ExportDeclaration extends ExportDeclarationBase {
         if (value) {
             insertIntoParentTextRange({
                 parent: this,
-                insertPos: ((_a = this.getNodeProperty("exportClause")) !== null && _a !== void 0 ? _a : this.getFirstChildByKindOrThrow(common.SyntaxKind.AsteriskToken)).getStart(),
+                insertPos: ((_a = this.getNodeProperty("exportClause")) !== null && _a !== void 0 ? _a : this.getFirstChildByKindOrThrow(ts.SyntaxKind.AsteriskToken)).getStart(),
                 newText: "type ",
             });
         }
         else {
-            const typeKeyword = this.getFirstChildByKindOrThrow(common.ts.SyntaxKind.TypeKeyword);
+            const typeKeyword = this.getFirstChildByKindOrThrow(ts.SyntaxKind.TypeKeyword);
             removeChildren({
                 children: [typeKeyword],
                 removeFollowingSpaces: true,
@@ -11054,7 +11079,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         const exportClause = this.getNodeProperty("exportClause");
         const newText = common.StringUtils.isNullOrWhitespace(name) ? "*" : `* as ${name}`;
         if (exportClause == null) {
-            const asteriskToken = this.getFirstChildByKindOrThrow(common.SyntaxKind.AsteriskToken);
+            const asteriskToken = this.getFirstChildByKindOrThrow(ts.SyntaxKind.AsteriskToken);
             insertIntoParentTextRange({
                 insertPos: asteriskToken.getStart(),
                 parent: this,
@@ -11086,7 +11111,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         }
         const stringLiteral = this.getModuleSpecifier();
         if (stringLiteral == null) {
-            const semiColonToken = this.getLastChildIfKind(common.SyntaxKind.SemicolonToken);
+            const semiColonToken = this.getLastChildIfKind(ts.SyntaxKind.SemicolonToken);
             const quoteKind = this._context.manipulationSettings.getQuoteKind();
             insertIntoParentTextRange({
                 insertPos: semiColonToken != null ? semiColonToken.getPos() : this.getEnd(),
@@ -11115,7 +11140,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         return common.errors.throwIfNullOrUndefined(this.getModuleSpecifierSourceFile(), `A module specifier source file was expected.`);
     }
     getModuleSpecifierSourceFile() {
-        const stringLiteral = this.getLastChildByKind(common.SyntaxKind.StringLiteral);
+        const stringLiteral = this.getLastChildByKind(ts.SyntaxKind.StringLiteral);
         if (stringLiteral == null)
             return undefined;
         const symbol = stringLiteral.getSymbol();
@@ -11137,21 +11162,21 @@ class ExportDeclaration extends ExportDeclarationBase {
         if (!this.hasNamedExports())
             throw new common.errors.InvalidOperationError(`Cannot remove the module specifier from an export declaration that has no named exports.`);
         removeChildren({
-            children: [this.getFirstChildByKindOrThrow(common.SyntaxKind.FromKeyword), moduleSpecifier],
+            children: [this.getFirstChildByKindOrThrow(ts.SyntaxKind.FromKeyword), moduleSpecifier],
             removePrecedingNewLines: true,
             removePrecedingSpaces: true,
         });
         return this;
     }
     hasModuleSpecifier() {
-        return this.getLastChildByKind(common.SyntaxKind.StringLiteral) != null;
+        return this.getLastChildByKind(ts.SyntaxKind.StringLiteral) != null;
     }
     isNamespaceExport() {
         return !this.hasNamedExports();
     }
     hasNamedExports() {
         var _a;
-        return ((_a = this.compilerNode.exportClause) === null || _a === void 0 ? void 0 : _a.kind) === common.SyntaxKind.NamedExports;
+        return ((_a = this.compilerNode.exportClause) === null || _a === void 0 ? void 0 : _a.kind) === ts.SyntaxKind.NamedExports;
     }
     addNamedExport(namedExport) {
         return this.addNamedExports([namedExport])[0];
@@ -11172,7 +11197,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         const exportClause = this.getNodeProperty("exportClause");
         if (exportClause == null) {
             namedExportStructurePrinter.printTextsWithBraces(writer, namedExports);
-            const asteriskToken = this.getFirstChildByKindOrThrow(common.SyntaxKind.AsteriskToken);
+            const asteriskToken = this.getFirstChildByKindOrThrow(ts.SyntaxKind.AsteriskToken);
             insertIntoParentTextRange({
                 insertPos: asteriskToken.getStart(),
                 parent: this,
@@ -11182,7 +11207,7 @@ class ExportDeclaration extends ExportDeclarationBase {
                 },
             });
         }
-        else if (exportClause.getKind() === common.SyntaxKind.NamespaceExport) {
+        else if (exportClause.getKind() === ts.SyntaxKind.NamespaceExport) {
             namedExportStructurePrinter.printTextsWithBraces(writer, namedExports);
             insertIntoParentTextRange({
                 insertPos: exportClause.getStart(),
@@ -11196,7 +11221,7 @@ class ExportDeclaration extends ExportDeclarationBase {
         else {
             namedExportStructurePrinter.printTexts(writer, namedExports);
             insertIntoCommaSeparatedNodes({
-                parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.NamedExports).getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.NamedExports).getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
                 currentNodes: originalNamedExports,
                 insertIndex: index,
                 newText: writer.toString(),
@@ -11209,7 +11234,7 @@ class ExportDeclaration extends ExportDeclarationBase {
     }
     getNamedExports() {
         const namedExports = this.compilerNode.exportClause;
-        if (namedExports == null || common.ts.isNamespaceExport(namedExports))
+        if (namedExports == null || ts.isNamespaceExport(namedExports))
             return [];
         return namedExports.elements.map(e => this._getNodeFromCompilerNode(e));
     }
@@ -11271,7 +11296,7 @@ function setEmptyNamedExport(node) {
         replaceNode = namedExportsNode;
     }
     else {
-        replaceNode = node.getFirstChildByKindOrThrow(common.SyntaxKind.AsteriskToken);
+        replaceNode = node.getFirstChildByKindOrThrow(ts.SyntaxKind.AsteriskToken);
     }
     insertIntoParentTextRange({
         parent: node,
@@ -11334,7 +11359,7 @@ class ExportSpecifier extends ExportSpecifierBase {
         if (aliasIdentifier == null)
             return this;
         removeChildren({
-            children: [this.getFirstChildByKindOrThrow(common.SyntaxKind.AsKeyword), aliasIdentifier],
+            children: [this.getFirstChildByKindOrThrow(ts.SyntaxKind.AsKeyword), aliasIdentifier],
             removePrecedingSpaces: true,
             removePrecedingNewLines: true,
         });
@@ -11354,7 +11379,7 @@ class ExportSpecifier extends ExportSpecifierBase {
         return this._getNodeFromCompilerNode(this.compilerNode.name);
     }
     getExportDeclaration() {
-        return this.getFirstAncestorByKindOrThrow(common.SyntaxKind.ExportDeclaration);
+        return this.getFirstAncestorByKindOrThrow(ts.SyntaxKind.ExportDeclaration);
     }
     getLocalTargetSymbolOrThrow() {
         return common.errors.throwIfNullOrUndefined(this.getLocalTargetSymbol(), `The export specifier's local target symbol was expected.`);
@@ -11439,7 +11464,7 @@ class ImportClause extends ImportClauseBase {
             });
         }
         else {
-            const typeKeyword = this.getFirstChildByKindOrThrow(common.ts.SyntaxKind.TypeKeyword);
+            const typeKeyword = this.getFirstChildByKindOrThrow(ts.SyntaxKind.TypeKeyword);
             removeChildren({
                 children: [typeKeyword],
                 removeFollowingSpaces: true,
@@ -11527,7 +11552,7 @@ class ImportDeclaration extends ImportDeclarationBase {
             defaultImport.replaceWithText(text);
             return this;
         }
-        const importKeyword = this.getFirstChildByKindOrThrow(common.SyntaxKind.ImportKeyword);
+        const importKeyword = this.getFirstChildByKindOrThrow(ts.SyntaxKind.ImportKeyword);
         const importClause = this.getImportClause();
         if (importClause == null) {
             insertIntoParentTextRange({
@@ -11582,7 +11607,7 @@ class ImportDeclaration extends ImportDeclarationBase {
             return this;
         }
         insertIntoParentTextRange({
-            insertPos: this.getFirstChildByKindOrThrow(common.SyntaxKind.ImportKeyword).getEnd(),
+            insertPos: this.getFirstChildByKindOrThrow(ts.SyntaxKind.ImportKeyword).getEnd(),
             parent: this,
             newText: ` * as ${text} from`,
         });
@@ -11601,9 +11626,9 @@ class ImportDeclaration extends ImportDeclarationBase {
         function getChildrenToRemove() {
             const defaultImport = this.getDefaultImport();
             if (defaultImport == null)
-                return [this.getImportClauseOrThrow(), this.getLastChildByKindOrThrow(common.SyntaxKind.FromKeyword)];
+                return [this.getImportClauseOrThrow(), this.getLastChildByKindOrThrow(ts.SyntaxKind.FromKeyword)];
             else
-                return [defaultImport.getNextSiblingIfKindOrThrow(common.SyntaxKind.CommaToken), namespaceImport];
+                return [defaultImport.getNextSiblingIfKindOrThrow(ts.SyntaxKind.CommaToken), namespaceImport];
         }
     }
     removeDefaultImport() {
@@ -11616,14 +11641,14 @@ class ImportDeclaration extends ImportDeclarationBase {
         const hasOnlyDefaultImport = importClause.getChildCount() === 1;
         if (hasOnlyDefaultImport) {
             removeChildren({
-                children: [importClause, importClause.getNextSiblingIfKindOrThrow(common.SyntaxKind.FromKeyword)],
+                children: [importClause, importClause.getNextSiblingIfKindOrThrow(ts.SyntaxKind.FromKeyword)],
                 removePrecedingSpaces: true,
                 removePrecedingNewLines: true,
             });
         }
         else {
             removeChildren({
-                children: [defaultImport, defaultImport.getNextSiblingIfKindOrThrow(common.SyntaxKind.CommaToken)],
+                children: [defaultImport, defaultImport.getNextSiblingIfKindOrThrow(ts.SyntaxKind.CommaToken)],
                 removePrecedingSpaces: true,
                 removePrecedingNewLines: true,
             });
@@ -11658,7 +11683,7 @@ class ImportDeclaration extends ImportDeclarationBase {
             namedImportStructurePrinter.printTextsWithBraces(writer, namedImports);
             if (importClause == null) {
                 insertIntoParentTextRange({
-                    insertPos: this.getFirstChildByKindOrThrow(common.SyntaxKind.ImportKeyword).getEnd(),
+                    insertPos: this.getFirstChildByKindOrThrow(ts.SyntaxKind.ImportKeyword).getEnd(),
                     parent: this,
                     newText: ` ${writer.toString()} from`,
                 });
@@ -11689,7 +11714,7 @@ class ImportDeclaration extends ImportDeclarationBase {
                 throw new common.errors.NotImplementedError("Expected to have an import clause.");
             namedImportStructurePrinter.printTexts(writer, namedImports);
             insertIntoCommaSeparatedNodes({
-                parent: importClause.getFirstChildByKindOrThrow(common.SyntaxKind.NamedImports).getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                parent: importClause.getFirstChildByKindOrThrow(ts.SyntaxKind.NamedImports).getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
                 currentNodes: originalNamedImports,
                 insertIndex: index,
                 newText: writer.toString(),
@@ -11709,15 +11734,15 @@ class ImportDeclaration extends ImportDeclarationBase {
         if (importClause == null)
             return this;
         const namedImportsNode = importClause.getNamedBindings();
-        if (namedImportsNode == null || namedImportsNode.getKind() !== common.SyntaxKind.NamedImports)
+        if (namedImportsNode == null || namedImportsNode.getKind() !== ts.SyntaxKind.NamedImports)
             return this;
         const defaultImport = this.getDefaultImport();
         if (defaultImport != null) {
-            const commaToken = defaultImport.getNextSiblingIfKindOrThrow(common.SyntaxKind.CommaToken);
+            const commaToken = defaultImport.getNextSiblingIfKindOrThrow(ts.SyntaxKind.CommaToken);
             removeChildren({ children: [commaToken, namedImportsNode] });
             return this;
         }
-        const fromKeyword = importClause.getNextSiblingIfKindOrThrow(common.SyntaxKind.FromKeyword);
+        const fromKeyword = importClause.getNextSiblingIfKindOrThrow(ts.SyntaxKind.FromKeyword);
         removeChildren({ children: [importClause, fromKeyword], removePrecedingSpaces: true });
         return this;
     }
@@ -11772,7 +11797,7 @@ function setEmptyNamedImport(node) {
         throw getErrorWhenNamespaceImportsExist();
     if (importClause == null) {
         insertIntoParentTextRange({
-            insertPos: node.getFirstChildByKindOrThrow(common.SyntaxKind.ImportKeyword).getEnd(),
+            insertPos: node.getFirstChildByKindOrThrow(ts.SyntaxKind.ImportKeyword).getEnd(),
             parent: node,
             newText: ` ${emptyBracesText} from`,
         });
@@ -11887,7 +11912,7 @@ class ImportSpecifier extends ImportSpecifierBase {
         if (aliasIdentifier == null)
             return this;
         removeChildren({
-            children: [this.getFirstChildByKindOrThrow(common.SyntaxKind.AsKeyword), aliasIdentifier],
+            children: [this.getFirstChildByKindOrThrow(ts.SyntaxKind.AsKeyword), aliasIdentifier],
             removePrecedingSpaces: true,
             removePrecedingNewLines: true,
         });
@@ -11907,7 +11932,7 @@ class ImportSpecifier extends ImportSpecifierBase {
         return this._getNodeFromCompilerNode(this.compilerNode.name);
     }
     getImportDeclaration() {
-        return this.getFirstAncestorByKindOrThrow(common.SyntaxKind.ImportDeclaration);
+        return this.getFirstAncestorByKindOrThrow(ts.SyntaxKind.ImportDeclaration);
     }
     remove() {
         const importDeclaration = this.getImportDeclaration();
@@ -11964,7 +11989,7 @@ function NamespaceChildableNode(Base) {
             let parent = this.getParentOrThrow();
             if (!Node.isModuleBlock(parent))
                 return undefined;
-            while (parent.getParentOrThrow().getKind() === common.SyntaxKind.ModuleDeclaration)
+            while (parent.getParentOrThrow().getKind() === ts.SyntaxKind.ModuleDeclaration)
                 parent = parent.getParentOrThrow();
             return parent;
         }
@@ -12012,7 +12037,7 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
         let current = this;
         do {
             nodes.push(this._getNodeFromCompilerNode(current.compilerNode.name));
-            current = current.getFirstChildByKind(common.SyntaxKind.ModuleDeclaration);
+            current = current.getFirstChildByKind(ts.SyntaxKind.ModuleDeclaration);
         } while (current != null);
         return nodes;
     }
@@ -12054,11 +12079,11 @@ class NamespaceDeclaration extends NamespaceDeclarationBase {
         const declarationKeyword = this.getDeclarationKindKeyword();
         if (declarationKeyword == null)
             return exports.NamespaceDeclarationKind.Global;
-        return declarationKeyword.getKind() === common.SyntaxKind.NamespaceKeyword ? exports.NamespaceDeclarationKind.Namespace : exports.NamespaceDeclarationKind.Module;
+        return declarationKeyword.getKind() === ts.SyntaxKind.NamespaceKeyword ? exports.NamespaceDeclarationKind.Namespace : exports.NamespaceDeclarationKind.Module;
     }
     getDeclarationKindKeyword() {
-        return this.getFirstChild(child => child.getKind() === common.SyntaxKind.NamespaceKeyword
-            || child.getKind() === common.SyntaxKind.ModuleKeyword);
+        return this.getFirstChild(child => child.getKind() === ts.SyntaxKind.NamespaceKeyword
+            || child.getKind() === ts.SyntaxKind.ModuleKeyword);
     }
     set(structure) {
         if (structure.name != null && structure.name !== "global")
@@ -12466,7 +12491,7 @@ class SourceFile extends SourceFileBase {
     getImportStringLiterals() {
         this._ensureBound();
         const literals = (this.compilerNode.imports || []);
-        return literals.filter(l => (l.flags & common.ts.NodeFlags.Synthesized) === 0).map(l => this._getNodeFromCompilerNode(l));
+        return literals.filter(l => (l.flags & ts.NodeFlags.Synthesized) === 0).map(l => this._getNodeFromCompilerNode(l));
     }
     getLanguageVersion() {
         return this.compilerNode.languageVersion;
@@ -12836,7 +12861,7 @@ class FunctionDeclaration extends FunctionDeclarationBase {
                 printer.printOverload(writer, thisName, structure);
             },
             getThisStructure: fromFunctionDeclarationOverload,
-            expectedSyntaxKind: common.SyntaxKind.FunctionDeclaration,
+            expectedSyntaxKind: ts.SyntaxKind.FunctionDeclaration,
         });
     }
     remove() {
@@ -12951,7 +12976,7 @@ function addParensIfNecessary(parameter) {
     function isParameterWithoutParens() {
         return Node.isArrowFunction(parent)
             && parent.compilerNode.parameters.length === 1
-            && parameter.getParentSyntaxListOrThrow().getPreviousSiblingIfKind(common.SyntaxKind.OpenParenToken) == null;
+            && parameter.getParentSyntaxListOrThrow().getPreviousSiblingIfKind(ts.SyntaxKind.OpenParenToken) == null;
     }
     function addParens() {
         const paramText = parameter.getText();
@@ -13016,7 +13041,7 @@ class MethodDeclaration extends MethodDeclarationBase {
                 printer.printOverload(writer, thisName, structure);
             },
             getThisStructure: fromMethodDeclarationOverload,
-            expectedSyntaxKind: common.SyntaxKind.MethodDeclaration,
+            expectedSyntaxKind: ts.SyntaxKind.MethodDeclaration,
         });
     }
     getStructure() {
@@ -13054,9 +13079,9 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             text = this._getTextWithQueuedChildIndentation(text);
             if (common.StringUtils.isNullOrWhitespace(text))
                 return this.removeExtends();
-            const extendsClause = this.getHeritageClauseByKind(common.SyntaxKind.ExtendsKeyword);
+            const extendsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ExtendsKeyword);
             if (extendsClause != null) {
-                const childSyntaxList = extendsClause.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList);
+                const childSyntaxList = extendsClause.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList);
                 const childSyntaxListStart = childSyntaxList.getStart();
                 insertIntoParentTextRange({
                     parent: extendsClause,
@@ -13068,12 +13093,12 @@ function ClassLikeDeclarationBaseSpecific(Base) {
                 });
             }
             else {
-                const implementsClause = this.getHeritageClauseByKind(common.SyntaxKind.ImplementsKeyword);
+                const implementsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ImplementsKeyword);
                 let insertPos;
                 if (implementsClause != null)
                     insertPos = implementsClause.getStart();
                 else
-                    insertPos = this.getFirstChildByKindOrThrow(common.SyntaxKind.OpenBraceToken).getStart();
+                    insertPos = this.getFirstChildByKindOrThrow(ts.SyntaxKind.OpenBraceToken).getStart();
                 const isLastSpace = /\s/.test(this.getSourceFile().getFullText()[insertPos - 1]);
                 let newText = `extends ${text} `;
                 if (!isLastSpace)
@@ -13087,7 +13112,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return this;
         }
         removeExtends() {
-            const extendsClause = this.getHeritageClauseByKind(common.SyntaxKind.ExtendsKeyword);
+            const extendsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ExtendsKeyword);
             if (extendsClause == null)
                 return this;
             extendsClause.removeExpression(0);
@@ -13097,7 +13122,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return common.errors.throwIfNullOrUndefined(this.getExtends(), `Expected to find the extends expression for the class ${this.getName()}.`);
         }
         getExtends() {
-            const extendsClause = this.getHeritageClauseByKind(common.SyntaxKind.ExtendsKeyword);
+            const extendsClause = this.getHeritageClauseByKind(ts.SyntaxKind.ExtendsKeyword);
             if (extendsClause == null)
                 return undefined;
             const types = extendsClause.getTypeNodes();
@@ -13162,7 +13187,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return insertChildren$1(this, {
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.Constructor,
+                expectedKind: ts.SyntaxKind.Constructor,
                 write: (writer, info) => {
                     if (!isAmbient && info.previousMember != null && !Node.isCommentNode(info.previousMember))
                         writer.blankLineIfLastNot();
@@ -13192,7 +13217,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return insertChildren$1(this, {
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.GetAccessor,
+                expectedKind: ts.SyntaxKind.GetAccessor,
                 write: (writer, info) => {
                     if (info.previousMember != null && !Node.isCommentNode(info.previousMember))
                         writer.blankLineIfLastNot();
@@ -13221,7 +13246,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return insertChildren$1(this, {
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.SetAccessor,
+                expectedKind: ts.SyntaxKind.SetAccessor,
                 write: (writer, info) => {
                     if (info.previousMember != null && !Node.isCommentNode(info.previousMember))
                         writer.blankLineIfLastNot();
@@ -13250,7 +13275,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
             return insertChildren$1(this, {
                 index,
                 structures,
-                expectedKind: common.SyntaxKind.PropertyDeclaration,
+                expectedKind: ts.SyntaxKind.PropertyDeclaration,
                 write: (writer, info) => {
                     if (info.previousMember != null && Node.hasBody(info.previousMember))
                         writer.blankLineIfLastNot();
@@ -13290,7 +13315,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
                         writer.newLineIfLastNot();
                 },
                 structures,
-                expectedKind: common.SyntaxKind.MethodDeclaration,
+                expectedKind: ts.SyntaxKind.MethodDeclaration,
             });
         }
         getInstanceProperty(nameOrFindFunction) {
@@ -13439,7 +13464,7 @@ function ClassLikeDeclarationBaseSpecific(Base) {
                 .filter(s => s != null)
                 .map(s => s.getDeclarations())
                 .reduce((a, b) => a.concat(b), [])
-                .filter(d => d.getKind() === common.SyntaxKind.ClassDeclaration);
+                .filter(d => d.getKind() === ts.SyntaxKind.ClassDeclaration);
             if (declarations.length !== 1)
                 return undefined;
             return declarations[0];
@@ -13474,13 +13499,13 @@ function getImmediateDerivedClasses(classDec) {
     if (nameNode == null)
         return classes;
     for (const node of nameNode.findReferencesAsNodes()) {
-        const nodeParent = node.getParentIfKind(common.SyntaxKind.ExpressionWithTypeArguments);
+        const nodeParent = node.getParentIfKind(ts.SyntaxKind.ExpressionWithTypeArguments);
         if (nodeParent == null)
             continue;
-        const heritageClause = nodeParent.getParentIfKind(common.SyntaxKind.HeritageClause);
-        if (heritageClause == null || heritageClause.getToken() !== common.SyntaxKind.ExtendsKeyword)
+        const heritageClause = nodeParent.getParentIfKind(ts.SyntaxKind.HeritageClause);
+        if (heritageClause == null || heritageClause.getToken() !== ts.SyntaxKind.ExtendsKeyword)
             continue;
-        const derivedClass = heritageClause.getParentIfKind(common.SyntaxKind.ClassDeclaration);
+        const derivedClass = heritageClause.getParentIfKind(ts.SyntaxKind.ClassDeclaration);
         if (derivedClass == null)
             continue;
         classes.push(derivedClass);
@@ -13694,7 +13719,7 @@ class ConstructorDeclaration extends ConstructorDeclarationBase {
                 printer.printOverload(writer, structure);
             },
             getThisStructure: fromConstructorDeclarationOverload,
-            expectedSyntaxKind: common.SyntaxKind.Constructor,
+            expectedSyntaxKind: ts.SyntaxKind.Constructor,
         });
     }
     getStructure() {
@@ -13759,7 +13784,7 @@ class PropertyDeclaration extends PropertyDeclarationBase {
     remove() {
         const parent = this.getParentOrThrow();
         switch (parent.getKind()) {
-            case common.SyntaxKind.ClassDeclaration:
+            case ts.SyntaxKind.ClassDeclaration:
                 super.remove();
                 break;
             default:
@@ -13831,7 +13856,7 @@ class Decorator extends DecoratorBase {
         return this.compilerNode.expression.getText(sourceFile.compilerNode);
     }
     isDecoratorFactory() {
-        return this.compilerNode.expression.kind === common.SyntaxKind.CallExpression;
+        return this.compilerNode.expression.kind === ts.SyntaxKind.CallExpression;
     }
     setIsDecoratorFactory(isDecoratorFactory) {
         if (this.isDecoratorFactory() === isDecoratorFactory)
@@ -13929,7 +13954,7 @@ class Decorator extends DecoratorBase {
     }
     remove() {
         const thisStartLinePos = this.getStartLinePos();
-        const previousDecorator = this.getPreviousSiblingIfKind(common.SyntaxKind.Decorator);
+        const previousDecorator = this.getPreviousSiblingIfKind(ts.SyntaxKind.Decorator);
         if (previousDecorator != null && previousDecorator.getStartLinePos() === thisStartLinePos) {
             removeChildren({
                 children: [this],
@@ -14264,7 +14289,7 @@ function getNextTagStartOrDocEnd(jsDocTag, nextJsDocTag) {
         : jsDocTag.getParentOrThrow().getEnd() - 2;
 }
 function getNextJsDocTag(jsDocTag) {
-    const parent = jsDocTag.getParentIfKindOrThrow(common.SyntaxKind.JSDocComment);
+    const parent = jsDocTag.getParentIfKindOrThrow(ts.SyntaxKind.JSDocComment);
     const tags = parent.getTags();
     const thisIndex = tags.indexOf(jsDocTag);
     return tags[thisIndex + 1];
@@ -14345,7 +14370,7 @@ class ImportTypeNode extends ImportTypeNodeBase {
         if (qualifier != null)
             qualifier.replaceWithText(text, this._getWriterWithQueuedChildIndentation());
         else {
-            const paren = this.getFirstChildByKindOrThrow(common.SyntaxKind.CloseParenToken);
+            const paren = this.getFirstChildByKindOrThrow(ts.SyntaxKind.CloseParenToken);
             insertIntoParentTextRange({
                 insertPos: paren.getEnd(),
                 parent: this,
@@ -14456,7 +14481,7 @@ class TypeParameterDeclaration extends TypeParameterDeclarationBase {
         return this;
     }
     removeConstraint() {
-        removeConstraintOrDefault(this.getConstraint(), common.SyntaxKind.ExtendsKeyword);
+        removeConstraintOrDefault(this.getConstraint(), ts.SyntaxKind.ExtendsKeyword);
         return this;
     }
     getDefault() {
@@ -14485,21 +14510,21 @@ class TypeParameterDeclaration extends TypeParameterDeclarationBase {
         return this;
     }
     removeDefault() {
-        removeConstraintOrDefault(this.getDefault(), common.SyntaxKind.EqualsToken);
+        removeConstraintOrDefault(this.getDefault(), ts.SyntaxKind.EqualsToken);
         return this;
     }
     remove() {
         const parentSyntaxList = this.getParentSyntaxListOrThrow();
-        const typeParameters = parentSyntaxList.getChildrenOfKind(common.SyntaxKind.TypeParameter);
+        const typeParameters = parentSyntaxList.getChildrenOfKind(ts.SyntaxKind.TypeParameter);
         if (typeParameters.length === 1)
             removeAllTypeParameters();
         else
             removeCommaSeparatedChild(this);
         function removeAllTypeParameters() {
             const children = [
-                parentSyntaxList.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.LessThanToken),
+                parentSyntaxList.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.LessThanToken),
                 parentSyntaxList,
-                parentSyntaxList.getNextSiblingIfKindOrThrow(common.SyntaxKind.GreaterThanToken),
+                parentSyntaxList.getNextSiblingIfKindOrThrow(ts.SyntaxKind.GreaterThanToken),
             ];
             removeChildren({ children });
         }
@@ -14735,7 +14760,7 @@ class EnumDeclaration extends EnumDeclarationBase {
         return this.getConstKeyword() != null;
     }
     getConstKeyword() {
-        return this.getFirstModifierByKind(common.SyntaxKind.ConstKeyword);
+        return this.getFirstModifierByKind(ts.SyntaxKind.ConstKeyword);
     }
     getStructure() {
         return callBaseGetStructure(EnumDeclarationBase.prototype, this, {
@@ -14766,7 +14791,7 @@ class EnumMember extends EnumMemberBase {
     }
     remove() {
         const childrenToRemove = [this];
-        const commaToken = this.getNextSiblingIfKind(common.SyntaxKind.CommaToken);
+        const commaToken = this.getNextSiblingIfKind(ts.SyntaxKind.CommaToken);
         if (commaToken != null)
             childrenToRemove.push(commaToken);
         removeChildrenWithFormatting({
@@ -14990,7 +15015,7 @@ function JsxAttributedNode(Base) {
             insertIntoParentTextRange({
                 insertPos,
                 newText: " " + writer.toString(),
-                parent: this.getNodeProperty("attributes").getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+                parent: this.getNodeProperty("attributes").getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
             });
             return getNodesToReturn(originalChildrenCount, this.getAttributes(), index, false);
         }
@@ -15060,7 +15085,7 @@ class JsxAttribute extends JsxAttributeBase {
         if (initializer == null)
             return this;
         removeChildren({
-            children: [initializer.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.EqualsToken), initializer],
+            children: [initializer.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.EqualsToken), initializer],
             removePrecedingSpaces: true,
             removePrecedingNewLines: true,
         });
@@ -15283,7 +15308,7 @@ class BigIntLiteral extends BigIntLiteralBase {
 const BooleanLiteralBase = PrimaryExpression;
 class BooleanLiteral extends BooleanLiteralBase {
     getLiteralValue() {
-        return this.getKind() === common.SyntaxKind.TrueKeyword;
+        return this.getKind() === ts.SyntaxKind.TrueKeyword;
     }
     setLiteralValue(value) {
         if (this.getLiteralValue() === value)
@@ -15499,17 +15524,17 @@ class VariableDeclaration extends VariableDeclarationBase {
     remove() {
         const parent = this.getParentOrThrow();
         switch (parent.getKind()) {
-            case common.SyntaxKind.VariableDeclarationList:
+            case ts.SyntaxKind.VariableDeclarationList:
                 removeFromDeclarationList(this);
                 break;
-            case common.SyntaxKind.CatchClause:
+            case ts.SyntaxKind.CatchClause:
                 removeFromCatchClause(this);
                 break;
             default:
                 throw new common.errors.NotImplementedError(`Not implemented for syntax kind: ${parent.getKindName()}`);
         }
         function removeFromDeclarationList(node) {
-            const variableStatement = parent.getParentIfKindOrThrow(common.SyntaxKind.VariableStatement);
+            const variableStatement = parent.getParentIfKindOrThrow(ts.SyntaxKind.VariableStatement);
             const declarations = variableStatement.getDeclarations();
             if (declarations.length === 1)
                 variableStatement.remove();
@@ -15519,9 +15544,9 @@ class VariableDeclaration extends VariableDeclarationBase {
         function removeFromCatchClause(node) {
             removeChildren({
                 children: [
-                    node.getPreviousSiblingIfKindOrThrow(common.SyntaxKind.OpenParenToken),
+                    node.getPreviousSiblingIfKindOrThrow(ts.SyntaxKind.OpenParenToken),
                     node,
-                    node.getNextSiblingIfKindOrThrow(common.SyntaxKind.CloseParenToken),
+                    node.getNextSiblingIfKindOrThrow(ts.SyntaxKind.CloseParenToken),
                 ],
                 removePrecedingSpaces: true,
             });
@@ -15552,9 +15577,9 @@ class VariableDeclarationList extends VariableDeclarationListBase {
     }
     getDeclarationKind() {
         const nodeFlags = this.compilerNode.flags;
-        if (nodeFlags & common.ts.NodeFlags.Let)
+        if (nodeFlags & ts.NodeFlags.Let)
             return exports.VariableDeclarationKind.Let;
-        else if (nodeFlags & common.ts.NodeFlags.Const)
+        else if (nodeFlags & ts.NodeFlags.Const)
             return exports.VariableDeclarationKind.Const;
         else
             return exports.VariableDeclarationKind.Var;
@@ -15563,11 +15588,11 @@ class VariableDeclarationList extends VariableDeclarationListBase {
         const declarationKind = this.getDeclarationKind();
         switch (declarationKind) {
             case exports.VariableDeclarationKind.Const:
-                return this.getFirstChildByKindOrThrow(common.SyntaxKind.ConstKeyword);
+                return this.getFirstChildByKindOrThrow(ts.SyntaxKind.ConstKeyword);
             case exports.VariableDeclarationKind.Let:
-                return this.getFirstChildByKindOrThrow(common.SyntaxKind.LetKeyword);
+                return this.getFirstChildByKindOrThrow(ts.SyntaxKind.LetKeyword);
             case exports.VariableDeclarationKind.Var:
-                return this.getFirstChildByKindOrThrow(common.SyntaxKind.VarKeyword);
+                return this.getFirstChildByKindOrThrow(ts.SyntaxKind.VarKeyword);
             default:
                 return common.errors.throwNotImplementedForNeverValueError(declarationKind);
         }
@@ -15602,7 +15627,7 @@ class VariableDeclarationList extends VariableDeclarationListBase {
         index = verifyAndGetIndex(index, originalChildrenCount);
         structurePrinter.printText(writer, structures);
         insertIntoCommaSeparatedNodes({
-            parent: this.getFirstChildByKindOrThrow(common.SyntaxKind.SyntaxList),
+            parent: this.getFirstChildByKindOrThrow(ts.SyntaxKind.SyntaxList),
             currentNodes: this.getDeclarations(),
             insertIndex: index,
             newText: writer.toString(),
@@ -15698,7 +15723,7 @@ class Symbol {
     getExport(name) {
         if (this.compilerSymbol.exports == null)
             return undefined;
-        const tsSymbol = this.compilerSymbol.exports.get(common.ts.escapeLeadingUnderscores(name));
+        const tsSymbol = this.compilerSymbol.exports.get(ts.escapeLeadingUnderscores(name));
         return tsSymbol == null ? undefined : this._context.compilerFactory.getSymbol(tsSymbol);
     }
     getExports() {
@@ -15712,7 +15737,7 @@ class Symbol {
     getGlobalExport(name) {
         if (this.compilerSymbol.globalExports == null)
             return undefined;
-        const tsSymbol = this.compilerSymbol.globalExports.get(common.ts.escapeLeadingUnderscores(name));
+        const tsSymbol = this.compilerSymbol.globalExports.get(ts.escapeLeadingUnderscores(name));
         return tsSymbol == null ? undefined : this._context.compilerFactory.getSymbol(tsSymbol);
     }
     getGlobalExports() {
@@ -15726,7 +15751,7 @@ class Symbol {
     getMember(name) {
         if (this.compilerSymbol.members == null)
             return undefined;
-        const tsSymbol = this.compilerSymbol.members.get(common.ts.escapeLeadingUnderscores(name));
+        const tsSymbol = this.compilerSymbol.members.get(ts.escapeLeadingUnderscores(name));
         return tsSymbol == null ? undefined : this._context.compilerFactory.getSymbol(tsSymbol);
     }
     getMembers() {
@@ -15962,7 +15987,7 @@ class DefinitionInfo extends DocumentSpan {
         const identifier = findIdentifier(this.getSourceFile());
         return identifier == null ? undefined : identifier.getParentOrThrow();
         function findIdentifier(node) {
-            if (node.getKind() === common.SyntaxKind.Identifier && node.getStart() === start)
+            if (node.getKind() === ts.SyntaxKind.Identifier && node.getStart() === start)
                 return node;
             for (const child of node._getChildrenIterator()) {
                 if (child.getPos() <= start && child.getEnd() >= start)
@@ -16356,7 +16381,7 @@ class TypeChecker {
     _getDefaultTypeFormatFlags(enclosingNode) {
         let formatFlags = (common.TypeFormatFlags.UseTypeOfFunction | common.TypeFormatFlags.NoTruncation | common.TypeFormatFlags.UseFullyQualifiedType
             | common.TypeFormatFlags.WriteTypeArgumentsOfSignature);
-        if (enclosingNode != null && enclosingNode.getKind() === common.SyntaxKind.TypeAliasDeclaration)
+        if (enclosingNode != null && enclosingNode.getKind() === ts.SyntaxKind.TypeAliasDeclaration)
             formatFlags |= common.TypeFormatFlags.InTypeAlias;
         return formatFlags;
     }
@@ -16378,7 +16403,7 @@ class Program {
         const compilerOptions = this._context.compilerOptions.get();
         this._getOrCreateCompilerObject = () => {
             if (this._createdCompilerObject == null) {
-                this._createdCompilerObject = common.ts.createProgram(rootNames, compilerOptions, host, this._oldProgram);
+                this._createdCompilerObject = ts.createProgram(rootNames, compilerOptions, host, this._oldProgram);
                 delete this._oldProgram;
             }
             return this._createdCompilerObject;
@@ -16470,7 +16495,7 @@ class LanguageService {
             resolutionHost,
         });
         this._compilerHost = compilerHost;
-        this._compilerObject = common.ts.createLanguageService(languageServiceHost, this._context.compilerFactory.documentRegistry);
+        this._compilerObject = ts.createLanguageService(languageServiceHost, this._context.compilerFactory.documentRegistry);
         this._program = new Program(this._context, Array.from(this._context.compilerFactory.getSourceFilePaths()), this._compilerHost);
         this._context.compilerFactory.onSourceFileAdded(() => this._resetProgram());
         this._context.compilerFactory.onSourceFileRemoved(() => this._resetProgram());
@@ -16506,7 +16531,7 @@ class LanguageService {
         return Array.from(getReferencingNodes());
         function* getReferencingNodes() {
             for (const referencedSymbol of referencedSymbols) {
-                const isAlias = referencedSymbol.getDefinition().getKind() === common.ts.ScriptElementKind.alias;
+                const isAlias = referencedSymbol.getDefinition().getKind() === ts.ScriptElementKind.alias;
                 const references = referencedSymbol.getReferences();
                 for (let i = 0; i < references.length; i++) {
                     const reference = references[i];
@@ -17664,7 +17689,7 @@ class ForgetfulNodeCache extends common.KeyValueCache {
     }
     forgetNodes(nodes) {
         for (const node of nodes) {
-            if (node.wasForgotten() || node.getKind() === common.SyntaxKind.SourceFile)
+            if (node.wasForgotten() || node.getKind() === ts.SyntaxKind.SourceFile)
                 continue;
             node._forgetOnlyThis();
         }
@@ -17672,178 +17697,178 @@ class ForgetfulNodeCache extends common.KeyValueCache {
 }
 
 const kindToWrapperMappings = {
-    [common.SyntaxKind.SourceFile]: SourceFile,
-    [common.SyntaxKind.ArrayBindingPattern]: ArrayBindingPattern,
-    [common.SyntaxKind.ArrayLiteralExpression]: ArrayLiteralExpression,
-    [common.SyntaxKind.ArrayType]: ArrayTypeNode,
-    [common.SyntaxKind.ArrowFunction]: ArrowFunction,
-    [common.SyntaxKind.AsExpression]: AsExpression,
-    [common.SyntaxKind.AwaitExpression]: AwaitExpression,
-    [common.SyntaxKind.BigIntLiteral]: BigIntLiteral,
-    [common.SyntaxKind.BindingElement]: BindingElement,
-    [common.SyntaxKind.BinaryExpression]: BinaryExpression,
-    [common.SyntaxKind.Block]: Block,
-    [common.SyntaxKind.BreakStatement]: BreakStatement,
-    [common.SyntaxKind.CallExpression]: CallExpression,
-    [common.SyntaxKind.CallSignature]: CallSignatureDeclaration,
-    [common.SyntaxKind.CaseBlock]: CaseBlock,
-    [common.SyntaxKind.CaseClause]: CaseClause,
-    [common.SyntaxKind.CatchClause]: CatchClause,
-    [common.SyntaxKind.ClassDeclaration]: ClassDeclaration,
-    [common.SyntaxKind.ClassExpression]: ClassExpression,
-    [common.SyntaxKind.ConditionalType]: ConditionalTypeNode,
-    [common.SyntaxKind.Constructor]: ConstructorDeclaration,
-    [common.SyntaxKind.ConstructorType]: ConstructorTypeNode,
-    [common.SyntaxKind.ConstructSignature]: ConstructSignatureDeclaration,
-    [common.SyntaxKind.ContinueStatement]: ContinueStatement,
-    [common.SyntaxKind.CommaListExpression]: CommaListExpression,
-    [common.SyntaxKind.ComputedPropertyName]: ComputedPropertyName,
-    [common.SyntaxKind.ConditionalExpression]: ConditionalExpression,
-    [common.SyntaxKind.DebuggerStatement]: DebuggerStatement,
-    [common.SyntaxKind.Decorator]: Decorator,
-    [common.SyntaxKind.DefaultClause]: DefaultClause,
-    [common.SyntaxKind.DeleteExpression]: DeleteExpression,
-    [common.SyntaxKind.DoStatement]: DoStatement,
-    [common.SyntaxKind.ElementAccessExpression]: ElementAccessExpression,
-    [common.SyntaxKind.EmptyStatement]: EmptyStatement,
-    [common.SyntaxKind.EnumDeclaration]: EnumDeclaration,
-    [common.SyntaxKind.EnumMember]: EnumMember,
-    [common.SyntaxKind.ExportAssignment]: ExportAssignment,
-    [common.SyntaxKind.ExportDeclaration]: ExportDeclaration,
-    [common.SyntaxKind.ExportSpecifier]: ExportSpecifier,
-    [common.SyntaxKind.ExpressionWithTypeArguments]: ExpressionWithTypeArguments,
-    [common.SyntaxKind.ExpressionStatement]: ExpressionStatement,
-    [common.SyntaxKind.ExternalModuleReference]: ExternalModuleReference,
-    [common.SyntaxKind.QualifiedName]: QualifiedName,
-    [common.SyntaxKind.ForInStatement]: ForInStatement,
-    [common.SyntaxKind.ForOfStatement]: ForOfStatement,
-    [common.SyntaxKind.ForStatement]: ForStatement,
-    [common.SyntaxKind.FunctionDeclaration]: FunctionDeclaration,
-    [common.SyntaxKind.FunctionExpression]: FunctionExpression,
-    [common.SyntaxKind.FunctionType]: FunctionTypeNode,
-    [common.SyntaxKind.GetAccessor]: GetAccessorDeclaration,
-    [common.SyntaxKind.HeritageClause]: HeritageClause,
-    [common.SyntaxKind.Identifier]: Identifier,
-    [common.SyntaxKind.IfStatement]: IfStatement,
-    [common.SyntaxKind.ImportClause]: ImportClause,
-    [common.SyntaxKind.ImportDeclaration]: ImportDeclaration,
-    [common.SyntaxKind.ImportEqualsDeclaration]: ImportEqualsDeclaration,
-    [common.SyntaxKind.ImportSpecifier]: ImportSpecifier,
-    [common.SyntaxKind.ImportType]: ImportTypeNode,
-    [common.SyntaxKind.IndexedAccessType]: IndexedAccessTypeNode,
-    [common.SyntaxKind.IndexSignature]: IndexSignatureDeclaration,
-    [common.SyntaxKind.InferType]: InferTypeNode,
-    [common.SyntaxKind.InterfaceDeclaration]: InterfaceDeclaration,
-    [common.SyntaxKind.IntersectionType]: IntersectionTypeNode,
-    [common.SyntaxKind.JSDocAugmentsTag]: JSDocAugmentsTag,
-    [common.SyntaxKind.JSDocClassTag]: JSDocClassTag,
-    [common.SyntaxKind.JSDocFunctionType]: JSDocFunctionType,
-    [common.SyntaxKind.JSDocParameterTag]: JSDocParameterTag,
-    [common.SyntaxKind.JSDocPrivateTag]: JSDocPrivateTag,
-    [common.SyntaxKind.JSDocPropertyTag]: JSDocPropertyTag,
-    [common.SyntaxKind.JSDocProtectedTag]: JSDocProtectedTag,
-    [common.SyntaxKind.JSDocPublicTag]: JSDocPublicTag,
-    [common.SyntaxKind.JSDocReturnTag]: JSDocReturnTag,
-    [common.SyntaxKind.JSDocReadonlyTag]: JSDocReadonlyTag,
-    [common.SyntaxKind.JSDocSignature]: JSDocSignature,
-    [common.SyntaxKind.JSDocTag]: JSDocUnknownTag,
-    [common.SyntaxKind.JSDocTemplateTag]: JSDocTemplateTag,
-    [common.SyntaxKind.JSDocThisTag]: JSDocThisTag,
-    [common.SyntaxKind.JSDocTypeExpression]: JSDocTypeExpression,
-    [common.SyntaxKind.JSDocTypeTag]: JSDocTypeTag,
-    [common.SyntaxKind.JSDocTypedefTag]: JSDocTypedefTag,
-    [common.SyntaxKind.JsxAttribute]: JsxAttribute,
-    [common.SyntaxKind.JsxClosingElement]: JsxClosingElement,
-    [common.SyntaxKind.JsxClosingFragment]: JsxClosingFragment,
-    [common.SyntaxKind.JsxElement]: JsxElement,
-    [common.SyntaxKind.JsxExpression]: JsxExpression,
-    [common.SyntaxKind.JsxFragment]: JsxFragment,
-    [common.SyntaxKind.JsxOpeningElement]: JsxOpeningElement,
-    [common.SyntaxKind.JsxOpeningFragment]: JsxOpeningFragment,
-    [common.SyntaxKind.JsxSelfClosingElement]: JsxSelfClosingElement,
-    [common.SyntaxKind.JsxSpreadAttribute]: JsxSpreadAttribute,
-    [common.SyntaxKind.JsxText]: JsxText,
-    [common.SyntaxKind.LabeledStatement]: LabeledStatement,
-    [common.SyntaxKind.LiteralType]: LiteralTypeNode,
-    [common.SyntaxKind.MetaProperty]: MetaProperty,
-    [common.SyntaxKind.MethodDeclaration]: MethodDeclaration,
-    [common.SyntaxKind.MethodSignature]: MethodSignature,
-    [common.SyntaxKind.ModuleBlock]: ModuleBlock,
-    [common.SyntaxKind.ModuleDeclaration]: NamespaceDeclaration,
-    [common.SyntaxKind.NamedExports]: NamedExports,
-    [common.SyntaxKind.NamedImports]: NamedImports,
-    [common.SyntaxKind.NamespaceExport]: NamespaceExport,
-    [common.SyntaxKind.NamespaceImport]: NamespaceImport,
-    [common.SyntaxKind.NewExpression]: NewExpression,
-    [common.SyntaxKind.NonNullExpression]: NonNullExpression,
-    [common.SyntaxKind.NotEmittedStatement]: NotEmittedStatement,
-    [common.SyntaxKind.NoSubstitutionTemplateLiteral]: NoSubstitutionTemplateLiteral,
-    [common.SyntaxKind.NumericLiteral]: NumericLiteral,
-    [common.SyntaxKind.ObjectBindingPattern]: ObjectBindingPattern,
-    [common.SyntaxKind.ObjectLiteralExpression]: ObjectLiteralExpression,
-    [common.SyntaxKind.OmittedExpression]: OmittedExpression,
-    [common.SyntaxKind.Parameter]: ParameterDeclaration,
-    [common.SyntaxKind.ParenthesizedExpression]: ParenthesizedExpression,
-    [common.SyntaxKind.ParenthesizedType]: ParenthesizedTypeNode,
-    [common.SyntaxKind.PartiallyEmittedExpression]: PartiallyEmittedExpression,
-    [common.SyntaxKind.PostfixUnaryExpression]: PostfixUnaryExpression,
-    [common.SyntaxKind.PrefixUnaryExpression]: PrefixUnaryExpression,
-    [common.SyntaxKind.PrivateIdentifier]: PrivateIdentifier,
-    [common.SyntaxKind.PropertyAccessExpression]: PropertyAccessExpression,
-    [common.SyntaxKind.PropertyAssignment]: PropertyAssignment,
-    [common.SyntaxKind.PropertyDeclaration]: PropertyDeclaration,
-    [common.SyntaxKind.PropertySignature]: PropertySignature,
-    [common.SyntaxKind.RegularExpressionLiteral]: RegularExpressionLiteral,
-    [common.SyntaxKind.ReturnStatement]: ReturnStatement,
-    [common.SyntaxKind.SetAccessor]: SetAccessorDeclaration,
-    [common.SyntaxKind.ShorthandPropertyAssignment]: ShorthandPropertyAssignment,
-    [common.SyntaxKind.SpreadAssignment]: SpreadAssignment,
-    [common.SyntaxKind.SpreadElement]: SpreadElement,
-    [common.SyntaxKind.StringLiteral]: StringLiteral,
-    [common.SyntaxKind.SwitchStatement]: SwitchStatement,
-    [common.SyntaxKind.SyntaxList]: SyntaxList,
-    [common.SyntaxKind.TaggedTemplateExpression]: TaggedTemplateExpression,
-    [common.SyntaxKind.TemplateExpression]: TemplateExpression,
-    [common.SyntaxKind.TemplateHead]: TemplateHead,
-    [common.SyntaxKind.TemplateMiddle]: TemplateMiddle,
-    [common.SyntaxKind.TemplateSpan]: TemplateSpan,
-    [common.SyntaxKind.TemplateTail]: TemplateTail,
-    [common.SyntaxKind.ThisType]: ThisTypeNode,
-    [common.SyntaxKind.ThrowStatement]: ThrowStatement,
-    [common.SyntaxKind.TryStatement]: TryStatement,
-    [common.SyntaxKind.TupleType]: TupleTypeNode,
-    [common.SyntaxKind.TypeAliasDeclaration]: TypeAliasDeclaration,
-    [common.SyntaxKind.TypeAssertionExpression]: TypeAssertion,
-    [common.SyntaxKind.TypeLiteral]: TypeLiteralNode,
-    [common.SyntaxKind.TypeParameter]: TypeParameterDeclaration,
-    [common.SyntaxKind.TypePredicate]: TypePredicateNode,
-    [common.SyntaxKind.TypeReference]: TypeReferenceNode,
-    [common.SyntaxKind.UnionType]: UnionTypeNode,
-    [common.SyntaxKind.VariableDeclaration]: VariableDeclaration,
-    [common.SyntaxKind.VariableDeclarationList]: VariableDeclarationList,
-    [common.SyntaxKind.VariableStatement]: VariableStatement,
-    [common.SyntaxKind.JSDocComment]: JSDoc,
-    [common.SyntaxKind.TypeOfExpression]: TypeOfExpression,
-    [common.SyntaxKind.WhileStatement]: WhileStatement,
-    [common.SyntaxKind.WithStatement]: WithStatement,
-    [common.SyntaxKind.YieldExpression]: YieldExpression,
-    [common.SyntaxKind.SemicolonToken]: Node,
-    [common.SyntaxKind.AnyKeyword]: Expression,
-    [common.SyntaxKind.BooleanKeyword]: Expression,
-    [common.SyntaxKind.FalseKeyword]: BooleanLiteral,
-    [common.SyntaxKind.ImportKeyword]: ImportExpression,
-    [common.SyntaxKind.InferKeyword]: Node,
-    [common.SyntaxKind.NeverKeyword]: Node,
-    [common.SyntaxKind.NullKeyword]: NullLiteral,
-    [common.SyntaxKind.NumberKeyword]: Expression,
-    [common.SyntaxKind.ObjectKeyword]: Expression,
-    [common.SyntaxKind.StringKeyword]: Expression,
-    [common.SyntaxKind.SymbolKeyword]: Expression,
-    [common.SyntaxKind.SuperKeyword]: SuperExpression,
-    [common.SyntaxKind.ThisKeyword]: ThisExpression,
-    [common.SyntaxKind.TrueKeyword]: BooleanLiteral,
-    [common.SyntaxKind.UndefinedKeyword]: Expression,
-    [common.SyntaxKind.VoidExpression]: VoidExpression,
+    [ts.SyntaxKind.SourceFile]: SourceFile,
+    [ts.SyntaxKind.ArrayBindingPattern]: ArrayBindingPattern,
+    [ts.SyntaxKind.ArrayLiteralExpression]: ArrayLiteralExpression,
+    [ts.SyntaxKind.ArrayType]: ArrayTypeNode,
+    [ts.SyntaxKind.ArrowFunction]: ArrowFunction,
+    [ts.SyntaxKind.AsExpression]: AsExpression,
+    [ts.SyntaxKind.AwaitExpression]: AwaitExpression,
+    [ts.SyntaxKind.BigIntLiteral]: BigIntLiteral,
+    [ts.SyntaxKind.BindingElement]: BindingElement,
+    [ts.SyntaxKind.BinaryExpression]: BinaryExpression,
+    [ts.SyntaxKind.Block]: Block,
+    [ts.SyntaxKind.BreakStatement]: BreakStatement,
+    [ts.SyntaxKind.CallExpression]: CallExpression,
+    [ts.SyntaxKind.CallSignature]: CallSignatureDeclaration,
+    [ts.SyntaxKind.CaseBlock]: CaseBlock,
+    [ts.SyntaxKind.CaseClause]: CaseClause,
+    [ts.SyntaxKind.CatchClause]: CatchClause,
+    [ts.SyntaxKind.ClassDeclaration]: ClassDeclaration,
+    [ts.SyntaxKind.ClassExpression]: ClassExpression,
+    [ts.SyntaxKind.ConditionalType]: ConditionalTypeNode,
+    [ts.SyntaxKind.Constructor]: ConstructorDeclaration,
+    [ts.SyntaxKind.ConstructorType]: ConstructorTypeNode,
+    [ts.SyntaxKind.ConstructSignature]: ConstructSignatureDeclaration,
+    [ts.SyntaxKind.ContinueStatement]: ContinueStatement,
+    [ts.SyntaxKind.CommaListExpression]: CommaListExpression,
+    [ts.SyntaxKind.ComputedPropertyName]: ComputedPropertyName,
+    [ts.SyntaxKind.ConditionalExpression]: ConditionalExpression,
+    [ts.SyntaxKind.DebuggerStatement]: DebuggerStatement,
+    [ts.SyntaxKind.Decorator]: Decorator,
+    [ts.SyntaxKind.DefaultClause]: DefaultClause,
+    [ts.SyntaxKind.DeleteExpression]: DeleteExpression,
+    [ts.SyntaxKind.DoStatement]: DoStatement,
+    [ts.SyntaxKind.ElementAccessExpression]: ElementAccessExpression,
+    [ts.SyntaxKind.EmptyStatement]: EmptyStatement,
+    [ts.SyntaxKind.EnumDeclaration]: EnumDeclaration,
+    [ts.SyntaxKind.EnumMember]: EnumMember,
+    [ts.SyntaxKind.ExportAssignment]: ExportAssignment,
+    [ts.SyntaxKind.ExportDeclaration]: ExportDeclaration,
+    [ts.SyntaxKind.ExportSpecifier]: ExportSpecifier,
+    [ts.SyntaxKind.ExpressionWithTypeArguments]: ExpressionWithTypeArguments,
+    [ts.SyntaxKind.ExpressionStatement]: ExpressionStatement,
+    [ts.SyntaxKind.ExternalModuleReference]: ExternalModuleReference,
+    [ts.SyntaxKind.QualifiedName]: QualifiedName,
+    [ts.SyntaxKind.ForInStatement]: ForInStatement,
+    [ts.SyntaxKind.ForOfStatement]: ForOfStatement,
+    [ts.SyntaxKind.ForStatement]: ForStatement,
+    [ts.SyntaxKind.FunctionDeclaration]: FunctionDeclaration,
+    [ts.SyntaxKind.FunctionExpression]: FunctionExpression,
+    [ts.SyntaxKind.FunctionType]: FunctionTypeNode,
+    [ts.SyntaxKind.GetAccessor]: GetAccessorDeclaration,
+    [ts.SyntaxKind.HeritageClause]: HeritageClause,
+    [ts.SyntaxKind.Identifier]: Identifier,
+    [ts.SyntaxKind.IfStatement]: IfStatement,
+    [ts.SyntaxKind.ImportClause]: ImportClause,
+    [ts.SyntaxKind.ImportDeclaration]: ImportDeclaration,
+    [ts.SyntaxKind.ImportEqualsDeclaration]: ImportEqualsDeclaration,
+    [ts.SyntaxKind.ImportSpecifier]: ImportSpecifier,
+    [ts.SyntaxKind.ImportType]: ImportTypeNode,
+    [ts.SyntaxKind.IndexedAccessType]: IndexedAccessTypeNode,
+    [ts.SyntaxKind.IndexSignature]: IndexSignatureDeclaration,
+    [ts.SyntaxKind.InferType]: InferTypeNode,
+    [ts.SyntaxKind.InterfaceDeclaration]: InterfaceDeclaration,
+    [ts.SyntaxKind.IntersectionType]: IntersectionTypeNode,
+    [ts.SyntaxKind.JSDocAugmentsTag]: JSDocAugmentsTag,
+    [ts.SyntaxKind.JSDocClassTag]: JSDocClassTag,
+    [ts.SyntaxKind.JSDocFunctionType]: JSDocFunctionType,
+    [ts.SyntaxKind.JSDocParameterTag]: JSDocParameterTag,
+    [ts.SyntaxKind.JSDocPrivateTag]: JSDocPrivateTag,
+    [ts.SyntaxKind.JSDocPropertyTag]: JSDocPropertyTag,
+    [ts.SyntaxKind.JSDocProtectedTag]: JSDocProtectedTag,
+    [ts.SyntaxKind.JSDocPublicTag]: JSDocPublicTag,
+    [ts.SyntaxKind.JSDocReturnTag]: JSDocReturnTag,
+    [ts.SyntaxKind.JSDocReadonlyTag]: JSDocReadonlyTag,
+    [ts.SyntaxKind.JSDocSignature]: JSDocSignature,
+    [ts.SyntaxKind.JSDocTag]: JSDocUnknownTag,
+    [ts.SyntaxKind.JSDocTemplateTag]: JSDocTemplateTag,
+    [ts.SyntaxKind.JSDocThisTag]: JSDocThisTag,
+    [ts.SyntaxKind.JSDocTypeExpression]: JSDocTypeExpression,
+    [ts.SyntaxKind.JSDocTypeTag]: JSDocTypeTag,
+    [ts.SyntaxKind.JSDocTypedefTag]: JSDocTypedefTag,
+    [ts.SyntaxKind.JsxAttribute]: JsxAttribute,
+    [ts.SyntaxKind.JsxClosingElement]: JsxClosingElement,
+    [ts.SyntaxKind.JsxClosingFragment]: JsxClosingFragment,
+    [ts.SyntaxKind.JsxElement]: JsxElement,
+    [ts.SyntaxKind.JsxExpression]: JsxExpression,
+    [ts.SyntaxKind.JsxFragment]: JsxFragment,
+    [ts.SyntaxKind.JsxOpeningElement]: JsxOpeningElement,
+    [ts.SyntaxKind.JsxOpeningFragment]: JsxOpeningFragment,
+    [ts.SyntaxKind.JsxSelfClosingElement]: JsxSelfClosingElement,
+    [ts.SyntaxKind.JsxSpreadAttribute]: JsxSpreadAttribute,
+    [ts.SyntaxKind.JsxText]: JsxText,
+    [ts.SyntaxKind.LabeledStatement]: LabeledStatement,
+    [ts.SyntaxKind.LiteralType]: LiteralTypeNode,
+    [ts.SyntaxKind.MetaProperty]: MetaProperty,
+    [ts.SyntaxKind.MethodDeclaration]: MethodDeclaration,
+    [ts.SyntaxKind.MethodSignature]: MethodSignature,
+    [ts.SyntaxKind.ModuleBlock]: ModuleBlock,
+    [ts.SyntaxKind.ModuleDeclaration]: NamespaceDeclaration,
+    [ts.SyntaxKind.NamedExports]: NamedExports,
+    [ts.SyntaxKind.NamedImports]: NamedImports,
+    [ts.SyntaxKind.NamespaceExport]: NamespaceExport,
+    [ts.SyntaxKind.NamespaceImport]: NamespaceImport,
+    [ts.SyntaxKind.NewExpression]: NewExpression,
+    [ts.SyntaxKind.NonNullExpression]: NonNullExpression,
+    [ts.SyntaxKind.NotEmittedStatement]: NotEmittedStatement,
+    [ts.SyntaxKind.NoSubstitutionTemplateLiteral]: NoSubstitutionTemplateLiteral,
+    [ts.SyntaxKind.NumericLiteral]: NumericLiteral,
+    [ts.SyntaxKind.ObjectBindingPattern]: ObjectBindingPattern,
+    [ts.SyntaxKind.ObjectLiteralExpression]: ObjectLiteralExpression,
+    [ts.SyntaxKind.OmittedExpression]: OmittedExpression,
+    [ts.SyntaxKind.Parameter]: ParameterDeclaration,
+    [ts.SyntaxKind.ParenthesizedExpression]: ParenthesizedExpression,
+    [ts.SyntaxKind.ParenthesizedType]: ParenthesizedTypeNode,
+    [ts.SyntaxKind.PartiallyEmittedExpression]: PartiallyEmittedExpression,
+    [ts.SyntaxKind.PostfixUnaryExpression]: PostfixUnaryExpression,
+    [ts.SyntaxKind.PrefixUnaryExpression]: PrefixUnaryExpression,
+    [ts.SyntaxKind.PrivateIdentifier]: PrivateIdentifier,
+    [ts.SyntaxKind.PropertyAccessExpression]: PropertyAccessExpression,
+    [ts.SyntaxKind.PropertyAssignment]: PropertyAssignment,
+    [ts.SyntaxKind.PropertyDeclaration]: PropertyDeclaration,
+    [ts.SyntaxKind.PropertySignature]: PropertySignature,
+    [ts.SyntaxKind.RegularExpressionLiteral]: RegularExpressionLiteral,
+    [ts.SyntaxKind.ReturnStatement]: ReturnStatement,
+    [ts.SyntaxKind.SetAccessor]: SetAccessorDeclaration,
+    [ts.SyntaxKind.ShorthandPropertyAssignment]: ShorthandPropertyAssignment,
+    [ts.SyntaxKind.SpreadAssignment]: SpreadAssignment,
+    [ts.SyntaxKind.SpreadElement]: SpreadElement,
+    [ts.SyntaxKind.StringLiteral]: StringLiteral,
+    [ts.SyntaxKind.SwitchStatement]: SwitchStatement,
+    [ts.SyntaxKind.SyntaxList]: SyntaxList,
+    [ts.SyntaxKind.TaggedTemplateExpression]: TaggedTemplateExpression,
+    [ts.SyntaxKind.TemplateExpression]: TemplateExpression,
+    [ts.SyntaxKind.TemplateHead]: TemplateHead,
+    [ts.SyntaxKind.TemplateMiddle]: TemplateMiddle,
+    [ts.SyntaxKind.TemplateSpan]: TemplateSpan,
+    [ts.SyntaxKind.TemplateTail]: TemplateTail,
+    [ts.SyntaxKind.ThisType]: ThisTypeNode,
+    [ts.SyntaxKind.ThrowStatement]: ThrowStatement,
+    [ts.SyntaxKind.TryStatement]: TryStatement,
+    [ts.SyntaxKind.TupleType]: TupleTypeNode,
+    [ts.SyntaxKind.TypeAliasDeclaration]: TypeAliasDeclaration,
+    [ts.SyntaxKind.TypeAssertionExpression]: TypeAssertion,
+    [ts.SyntaxKind.TypeLiteral]: TypeLiteralNode,
+    [ts.SyntaxKind.TypeParameter]: TypeParameterDeclaration,
+    [ts.SyntaxKind.TypePredicate]: TypePredicateNode,
+    [ts.SyntaxKind.TypeReference]: TypeReferenceNode,
+    [ts.SyntaxKind.UnionType]: UnionTypeNode,
+    [ts.SyntaxKind.VariableDeclaration]: VariableDeclaration,
+    [ts.SyntaxKind.VariableDeclarationList]: VariableDeclarationList,
+    [ts.SyntaxKind.VariableStatement]: VariableStatement,
+    [ts.SyntaxKind.JSDocComment]: JSDoc,
+    [ts.SyntaxKind.TypeOfExpression]: TypeOfExpression,
+    [ts.SyntaxKind.WhileStatement]: WhileStatement,
+    [ts.SyntaxKind.WithStatement]: WithStatement,
+    [ts.SyntaxKind.YieldExpression]: YieldExpression,
+    [ts.SyntaxKind.SemicolonToken]: Node,
+    [ts.SyntaxKind.AnyKeyword]: Expression,
+    [ts.SyntaxKind.BooleanKeyword]: Expression,
+    [ts.SyntaxKind.FalseKeyword]: BooleanLiteral,
+    [ts.SyntaxKind.ImportKeyword]: ImportExpression,
+    [ts.SyntaxKind.InferKeyword]: Node,
+    [ts.SyntaxKind.NeverKeyword]: Node,
+    [ts.SyntaxKind.NullKeyword]: NullLiteral,
+    [ts.SyntaxKind.NumberKeyword]: Expression,
+    [ts.SyntaxKind.ObjectKeyword]: Expression,
+    [ts.SyntaxKind.StringKeyword]: Expression,
+    [ts.SyntaxKind.SymbolKeyword]: Expression,
+    [ts.SyntaxKind.SuperKeyword]: SuperExpression,
+    [ts.SyntaxKind.ThisKeyword]: ThisExpression,
+    [ts.SyntaxKind.TrueKeyword]: BooleanLiteral,
+    [ts.SyntaxKind.UndefinedKeyword]: Expression,
+    [ts.SyntaxKind.VoidExpression]: VoidExpression,
 };
 
 class CompilerFactory {
@@ -17965,7 +17990,7 @@ class CompilerFactory {
     }
     getSourceFileForNode(compilerNode) {
         let currentNode = compilerNode;
-        while (currentNode.kind !== common.SyntaxKind.SourceFile) {
+        while (currentNode.kind !== ts.SyntaxKind.SourceFile) {
             if (currentNode.parent == null)
                 return undefined;
             currentNode = currentNode.parent;
@@ -17979,7 +18004,7 @@ class CompilerFactory {
         return this.nodeCache.get(compilerNode);
     }
     getNodeFromCompilerNode(compilerNode, sourceFile) {
-        if (compilerNode.kind === common.SyntaxKind.SourceFile)
+        if (compilerNode.kind === ts.SyntaxKind.SourceFile)
             return this.getSourceFile(compilerNode, { markInProject: false });
         return this.nodeCache.getOrCreate(compilerNode, () => {
             const node = createNode.call(this);
@@ -18014,7 +18039,7 @@ class CompilerFactory {
             const parentSyntaxList = node._getParentSyntaxListIfWrapped();
             if (parentSyntaxList != null)
                 parentSyntaxList._wrappedChildCount++;
-            if (compilerNode.kind === common.SyntaxKind.SyntaxList) {
+            if (compilerNode.kind === ts.SyntaxKind.SyntaxList) {
                 let count = 0;
                 for (const _ of node._getChildrenInCacheIterator())
                     count++;
@@ -18032,7 +18057,7 @@ class CompilerFactory {
         return sourceFile;
     }
     createCompilerSourceFileFromText(filePath, text, scriptKind) {
-        return this.documentRegistry.createOrUpdateSourceFile(filePath, this.context.compilerOptions.get(), common.ts.ScriptSnapshot.fromString(text), scriptKind);
+        return this.documentRegistry.createOrUpdateSourceFile(filePath, this.context.compilerOptions.get(), ts.ScriptSnapshot.fromString(text), scriptKind);
     }
     getSourceFile(compilerSourceFile, options) {
         let wasAdded = false;
@@ -18135,7 +18160,7 @@ class CompilerFactory {
     replaceCompilerNode(oldNode, newNode) {
         const nodeToReplace = oldNode instanceof Node ? oldNode.compilerNode : oldNode;
         const node = oldNode instanceof Node ? oldNode : this.nodeCache.get(oldNode);
-        if (nodeToReplace.kind === common.SyntaxKind.SourceFile && nodeToReplace.fileName !== newNode.fileName) {
+        if (nodeToReplace.kind === ts.SyntaxKind.SourceFile && nodeToReplace.fileName !== newNode.fileName) {
             const sourceFile = node;
             this.removeCompilerNodeFromCache(nodeToReplace);
             sourceFile._replaceCompilerNodeFromFactory(newNode);
@@ -18154,7 +18179,7 @@ class CompilerFactory {
     }
     removeCompilerNodeFromCache(compilerNode) {
         this.nodeCache.removeByKey(compilerNode);
-        if (compilerNode.kind === common.SyntaxKind.SourceFile) {
+        if (compilerNode.kind === ts.SyntaxKind.SourceFile) {
             const sourceFile = compilerNode;
             const standardizedFilePath = this.context.fileSystemWrapper.getStandardizedAbsolutePath(sourceFile.fileName);
             this.directoryCache.removeSourceFile(standardizedFilePath);
@@ -18673,7 +18698,7 @@ class ProjectContext {
         });
     }
     getPreEmitDiagnostics(sourceFile) {
-        const compilerDiagnostics = common.ts.getPreEmitDiagnostics(this.program.compilerObject, sourceFile === null || sourceFile === void 0 ? void 0 : sourceFile.compilerNode);
+        const compilerDiagnostics = ts.getPreEmitDiagnostics(this.program.compilerObject, sourceFile === null || sourceFile === void 0 ? void 0 : sourceFile.compilerNode);
         return compilerDiagnostics.map(d => this.compilerFactory.getDiagnostic(d));
     }
     getSourceFileContainer() {
@@ -18998,7 +19023,7 @@ class Project {
         return this._context.compilerFactory.forgetNodesCreatedInBlock(block);
     }
     formatDiagnosticsWithColorAndContext(diagnostics, opts = {}) {
-        return common.ts.formatDiagnosticsWithColorAndContext(diagnostics.map(d => d.compilerObject), {
+        return ts.formatDiagnosticsWithColorAndContext(diagnostics.map(d => d.compilerObject), {
             getCurrentDirectory: () => this._context.fileSystemWrapper.getCurrentDirectory(),
             getCanonicalFileName: fileName => fileName,
             getNewLine: () => { var _a; return (_a = opts.newLineChar) !== null && _a !== void 0 ? _a : require("os").EOL; },

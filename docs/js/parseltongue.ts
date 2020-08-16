@@ -30,4 +30,4 @@ globalThis.compile = function(input) {
 	project.removeSourceFile(sourceFile);
 
 	return output;
-}
+};

@@ -49,10 +49,10 @@
 	<!-- Wrapper -->
 	<div id="wrapper">
 		<div class="row">
-			<div class="col-8">
+			<div class="col-7">
                 <div id="leftEditor"></div>
 			</div>
-			<div class="col-4">
+			<div class="col-5" style="padding-left: 0">
                 <div id="rightEditor"></div>
 			</div>
 		</div>
@@ -61,6 +61,7 @@
     <!-- Libraries -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/3.9.7/typescript.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 
 	<!-- Scripts -->
 	<script src="js/parseltongue.js" type="module"></script>
@@ -75,7 +76,7 @@
 
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		require(["vs/editor/editor.main"], function() {
-			leftEditor = window.monaco.editor.create(document.getElementById("leftEditor"), {
+			leftEditor = monaco.editor.create(document.getElementById("leftEditor"), {
 				"automaticLayout": true,
 				"contextmenu": false,
 				"language": "python",
@@ -84,7 +85,29 @@
 				}
 			});
 
-			rightEditor = window.monaco.editor.create(document.getElementById("rightEditor"), {
+			let shouldRecompile = true;
+
+			leftEditor.onDidChangeModelContent(function(event) {
+				if (shouldRecompile) {
+					shouldRecompile = false;
+
+					setTimeout(async function() {
+						try {
+							rightEditor.setValue(await compile(leftEditor.getValue()));
+						} catch (error) {
+							rightEditor.setValue(error.stack);
+						}
+
+						location.hash = "code/" + LZString.compressToEncodedURIComponent(
+							leftEditor.getValue(),
+      					);
+
+						shouldRecompile = true;
+					}, 1000);
+				}
+			});
+
+			rightEditor = monaco.editor.create(document.getElementById("rightEditor"), {
 				"automaticLayout": true,
 				"contextmenu": false,
 				"language": "typescript",
@@ -94,17 +117,15 @@
 				"readOnly": true
 			});
 
-			fetch("https://raw.githubusercontent.com/brianjenkins94/DumbLang/master/examples/recursiveFibonacci.ts").then(function(response) {
-				response.text().then(function(data) {
-					leftEditor.setValue(data);
+			if (location.hash.startsWith("#code/")) {
+				leftEditor.setValue(LZString.decompressFromEncodedURIComponent(location.hash.substring("#code/".length)))
+			} else {
+				fetch("https://raw.githubusercontent.com/cireneirbo/Parseltongue/master/input/forOfStatement.pt").then(function(response) {
+					response.text().then(function(data) {
+						leftEditor.setValue(data);
+					});
 				});
-			});
-
-			fetch("https://raw.githubusercontent.com/brianjenkins94/DumbLang/master/dlc/interpreter.ts").then(function(response) {
-				response.text().then(function(data) {
-					rightEditor.setValue(data);
-				});
-			});
+			}
 		});
 
 		document.addEventListener("DOMContentLoaded", function(event) {

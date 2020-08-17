@@ -7,8 +7,13 @@ export default function(sourceFile) {
 		"if": 0
 	};
 	let oldText = sourceFile.getFullText();
-	let newText = sourceFile.getFullText().replace("while", "while (").replace(":", ") {").replace("and", "&&") + "\n}";
-
+	let newText = sourceFile.getFullText().replace("while", "while (").replace(":", ") {").replace("and", "&&");
+	newText = newText.replace("if", "if (").replace("or", "||");
+	if (newText.slice(-1) === "\n") {
+		newText += "}";
+	} else {
+		newText += "\n}";
+	}
 	// // source
 	// const sourceFileSplitted = sourceFile.getFullText().split(" ");
 	// let sourceFileTransformed = "";

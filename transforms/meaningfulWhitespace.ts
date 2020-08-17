@@ -7,8 +7,8 @@ export default function(sourceFile) {
 		"if": 0
 	};
 	let oldText = sourceFile.getFullText();
-	let newText = sourceFile.getFullText().replace("while", "while (").replace(":", ") {").replace("and", "&&");
-	newText = newText.replace("if", "if (").replace("or", "||");
+	let newText = sourceFile.getFullText().replace("while ", "while (").replace(":", ") {").replace(" and ", " && ");
+	newText = newText.replace("if ", "if (").replace(" or ", " || ").replace("for ", "for (");
 	if (newText.slice(-1) === "\n") {
 		newText += "}";
 	} else {

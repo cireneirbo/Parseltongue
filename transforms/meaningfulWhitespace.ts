@@ -1,12 +1,7 @@
 import { SyntaxKind } from "../lib/typescript/SyntaxKind";
 
 export default function(sourceFile) {
-	console.log(sourceFile.getFullText());
-	let keywordCount = {
-		"while": 0,
-		"if": 0
-	};
-	let oldText = sourceFile.getFullText();
+	// const oldText = sourceFile.getFullText();
 	let newText = sourceFile.getFullText().replace("while ", "while (").replace(":", ") {").replace(" and ", " && ");
 	newText = newText.replace("if ", "if (").replace(" or ", " || ").replace("for ", "for (");
 	if (newText.slice(-1) === "\n") {
@@ -14,6 +9,13 @@ export default function(sourceFile) {
 	} else {
 		newText += "\n}";
 	}
+
+	// PLEASE DONT DELETE WE MAY USE LATER FOR MORE INTERESTING CASE SCENARIOS
+	// console.log(sourceFile.getFullText());
+	// let keywordCount = {
+	// 	"while": 0,
+	// 	"if": 0
+	// };
 	// // source
 	// const sourceFileSplitted = sourceFile.getFullText().split(" ");
 	// let sourceFileTransformed = "";

@@ -1,0 +1,10 @@
+const a = 1;
+const b = 2;
+
+if (a == 1 && 2 + 2 == 4) {
+    console.log();
+}
+
+if (2 + 2 == 4 && b == 2) {
+    console.log();
+}

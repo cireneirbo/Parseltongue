@@ -1,0 +1,9 @@
+const a,b = 1,2
+
+if a==1 and 2+2==4:
+    console.log()
+
+if 2+2==4 and b==2:
+    console.log()
+
+

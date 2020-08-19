@@ -1,9 +1,9 @@
 const isTrue = true
 
-if isTrue==True or 2+2==5:
+if isTrue == True or 2 + 2 == 5:
     console.log()
 
-if 2+2==5 or 3+2==5:
+if 2 + 2 == 5 or 3 + 2 == 5:
     console.log()
 
 

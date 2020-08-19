@@ -1,6 +1,6 @@
 const isTrue = true;
 
-if (isTrue == true || 2 + 2 == 5){
+if (isTrue == true || 2 + 2 == 5) {
     console.log();
 }
 

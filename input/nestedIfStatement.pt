@@ -1,0 +1,4 @@
+if (condition):
+    if (condition):
+        console.log()
+        console.log()

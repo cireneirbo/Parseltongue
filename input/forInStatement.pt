@@ -1,0 +1,3 @@
+for (const element in {}):
+    console.log()
+    console.log()

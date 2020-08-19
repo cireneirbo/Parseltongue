@@ -23138,23 +23138,25 @@ function transform (sourceFile) {
             case SyntaxKind.IfStatement:
             case SyntaxKind.WhileStatement:
                 const statements = [];
-                if (node.getText().endsWith(" and") || node.getText().endsWith(" or")) {
-                    const newNodeText = node.getFullText().trim() + node.getNextSibling().getFullText();
-                    node.replaceWithText(newNodeText.replace(/ and /g, " && ").replace(/ or /g, " || "));
-                    node.getNextSibling().remove();
+                let currentNode = node;
+                let nodeText = currentNode.getText();
+                if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
+                    for (currentNode = currentNode.getNextSibling(); currentNode.getPreviousSibling().getKind() !== SyntaxKind.ColonToken; currentNode = currentNode.getNextSibling()) {
+                        nodeText += currentNode.getFullText();
+                    }
+                    nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ") + currentNode.getNextSibling().getFullText();
                 }
-                const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(node.getText()).slice(1);
+                const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(nodeText).slice(1);
                 statements.push(" ".repeat(4) + firstStatement.trim());
                 const indentationWidth = getIndentationWidth(firstStatement);
-                const nodesToRemove = [];
-                for (let nextSibling = node.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling()) {
+                for (let nextSibling = currentNode.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling()) {
+                    currentNode = nextSibling;
                     for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
                         if (line === "") {
                             continue;
                         }
                         if (getIndentationWidth(line) === indentationWidth) {
                             statements.push(" ".repeat(4) + nextSibling.getText().trim());
-                            nodesToRemove.push(nextSibling);
                         }
                         else {
                             nextSibling = undefined;
@@ -23162,10 +23164,18 @@ function transform (sourceFile) {
                         }
                     }
                 }
-                for (const node of nodesToRemove) {
-                    node.remove();
+                let [parentNode] = node.getParent().getChildren();
+                const startIndex = parentNode.getChildren().indexOf(node);
+                const endIndex = parentNode.getChildren().indexOf(currentNode) + 1;
+                const newNodeText = [];
+                for (const node of parentNode.getChildren().slice(0, startIndex)) {
+                    newNodeText.push(node.getText());
                 }
-                node.replaceWithText(identifier + " (" + condition + ") {\n" + statements.join("\n") + "\n}\n");
+                newNodeText.push(identifier + " (" + condition + ") {\n" + statements.join("\n") + "\n}\n");
+                for (const node of parentNode.getChildren().slice(endIndex)) {
+                    newNodeText.push(node.getText());
+                }
+                parentNode.replaceWithText(newNodeText.join("\n"));
                 break;
             case SyntaxKind.SwitchStatement:
                 const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);

@@ -1,4 +1,6 @@
-const condition = true
+if condition:
+    console.log()
+    console.log()
 
 if condition and condition:
     console.log()

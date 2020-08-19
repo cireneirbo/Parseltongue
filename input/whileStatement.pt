@@ -1,4 +1,6 @@
-const condition = true
+while condition:
+    console.log()
+    console.log()
 
 while condition and condition:
     console.log()

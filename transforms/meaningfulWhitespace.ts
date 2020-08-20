@@ -8,48 +8,59 @@ export default function(sourceFile) {
 	sourceFile.forEachDescendant(function(node) {
 		switch (node.getKind()) {
 			case SyntaxKind.DoStatement:
+				throw new Error("Not yet implemented.");
+
+				break;
 			case SyntaxKind.ForInStatement:
 			case SyntaxKind.ForOfStatement:
 			case SyntaxKind.ForStatement:
 			case SyntaxKind.IfStatement:
 			case SyntaxKind.WhileStatement:
-				const statements = [];
-
 				let currentNode = node;
 
-				let nodeText = currentNode.getText();
+				const block = (function recurse() {
+					const statements = [];
 
-				if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
-					for (currentNode = currentNode.getNextSibling(); currentNode.getPreviousSibling().getKind() !== SyntaxKind.ColonToken; currentNode = currentNode.getNextSibling()) {
-						nodeText += currentNode.getFullText();
-					}
+					let nodeText = currentNode.getText();
 
-					nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ") + currentNode.getNextSibling().getFullText();
-				}
-
-				const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(nodeText).slice(1);
-
-				statements.push(" ".repeat(4) + firstStatement.trim());
-
-				const indentationWidth = getIndentationWidth(firstStatement);
-
-				for (let nextSibling = currentNode.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling()) {
-					currentNode = nextSibling;
-
-					for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
-						if (line === "") {
-							continue;
+					if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
+						for (currentNode = currentNode.getNextSibling(); currentNode.getPreviousSibling().getKind() !== SyntaxKind.ColonToken; currentNode = currentNode.getNextSibling()) {
+							nodeText += currentNode.getFullText();
 						}
 
-						if (getIndentationWidth(line) === indentationWidth) {
-							statements.push(" ".repeat(4) + nextSibling.getText().trim());
-						} else {
-							nextSibling = undefined;
+						nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ") + currentNode.getNextSibling().getFullText();
+					}
 
-							break;
+					const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
+
+					// This indentation (detection?) logic doesn't make sense
+
+					statements.push(rest);
+
+					const indentationWidth = getIndentationWidth(rest);
+
+					for (let nodeText = rest.slice(1), nextSibling = currentNode.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), nodeText = nextSibling?.getFullText()) {
+						currentNode = nextSibling;
+
+						for (const line of nodeText.split(/\r?\n/g)) {
+							if (line === "") {
+								continue;
+							}
+
+							if (getIndentationWidth(line) === indentationWidth) {
+								statements.push(" ".repeat(4) + nextSibling.getText().trim());
+							} else {
+								nextSibling = undefined;
+
+								break;
+							}
 						}
 					}
-				}
+
+					return identifier + " (" + condition + ") {\n" + (statements as string[]).join("\n") + "\n}\n";
+				})();
+
+				// SourceFile replacement logic
 
 				const [parentNode] = node.getParent().getChildren();
 				const startIndex = parentNode.getChildren().indexOf(node);
@@ -61,7 +72,7 @@ export default function(sourceFile) {
 					newNodeText.push(node.getText());
 				}
 
-				newNodeText.push(identifier + " (" + condition + ") {\n" + statements.join("\n") + "\n}\n");
+				newNodeText.push(block);
 
 				for (const node of parentNode.getChildren().slice(endIndex)) {
 					newNodeText.push(node.getText());
@@ -72,6 +83,10 @@ export default function(sourceFile) {
 				break;
 			case SyntaxKind.SwitchStatement:
 				const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);
+
+				throw new Error("Not yet implemented.");
+
+				break;
 			default:
 		}
 	});

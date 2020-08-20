@@ -51,7 +51,7 @@ export default function(sourceFile) {
 					}
 				}
 
-				let [parentNode] = node.getParent().getChildren();
+				const [parentNode] = node.getParent().getChildren();
 				const startIndex = parentNode.getChildren().indexOf(node);
 				const endIndex = parentNode.getChildren().indexOf(currentNode) + 1;
 

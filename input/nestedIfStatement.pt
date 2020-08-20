@@ -1,4 +1,9 @@
-if (condition):
-    if (condition):
+if condition:
+    if condition:
+        console.log()
+        console.log()
+
+if condition and condition:
+    if condition and condition:
         console.log()
         console.log()

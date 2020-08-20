@@ -39,7 +39,7 @@ export default function(sourceFile) {
 
 					const indentationWidth = getIndentationWidth(rest);
 
-					for (let nodeText = rest.slice(1), nextSibling = currentNode.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), nodeText = nextSibling?.getFullText()) {
+					for (let nextSibling = currentNode.getNextSibling(), nodeText = rest.slice(1); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), nodeText = nextSibling?.getFullText()) {
 						currentNode = nextSibling;
 
 						for (const line of nodeText.split(/\r?\n/g)) {

@@ -5,7 +5,7 @@ function getIndentationWidth(text) {
 }
 
 export default function(sourceFile) {
-	sourceFile.forEachDescendant(function(node) {
+	sourceFile.forEachChild(function recurse(node) {
 		switch (node.getKind()) {
 			case SyntaxKind.DoStatement:
 				throw new Error("Not yet implemented.");
@@ -18,37 +18,40 @@ export default function(sourceFile) {
 			case SyntaxKind.WhileStatement:
 				let currentNode = node;
 
-				const block = (function recurse() {
-					const statements = [];
-
-					let nodeText = currentNode.getText();
+				const block = (function recurse(nodeText) {
+					currentNode = currentNode.getNextSibling();
 
 					if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
-						for (currentNode = currentNode.getNextSibling(); currentNode.getPreviousSibling().getKind() !== SyntaxKind.ColonToken; currentNode = currentNode.getNextSibling()) {
-							nodeText += currentNode.getFullText();
+						for (; !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
+							nodeText += " " + currentNode.getFullText().trim();
 						}
 
-						nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ") + currentNode.getNextSibling().getFullText();
+						nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ");
 					}
 
 					const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
 
-					// This indentation (detection?) logic doesn't make sense
+					const statements = [];
 
-					statements.push(rest);
+					const blockIndentationWidth = getIndentationWidth(rest);
 
-					const indentationWidth = getIndentationWidth(rest);
-
+					// [!] Problem
 					for (let nextSibling = currentNode.getNextSibling(), nodeText = rest.slice(1); nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), nodeText = nextSibling?.getFullText()) {
-						currentNode = nextSibling;
-
 						for (const line of nodeText.split(/\r?\n/g)) {
 							if (line === "") {
 								continue;
 							}
 
-							if (getIndentationWidth(line) === indentationWidth) {
-								statements.push(" ".repeat(4) + nextSibling.getText().trim());
+							const currentIndentationWidth = getIndentationWidth(line);
+
+							if (currentIndentationWidth === blockIndentationWidth) {
+								currentNode = nextSibling;
+
+								statements.push(line);
+							} else if (currentIndentationWidth === blockIndentationWidth + 4) {
+								currentNode = nextSibling;
+
+								statements.push(recurse(line));
 							} else {
 								nextSibling = undefined;
 
@@ -58,27 +61,30 @@ export default function(sourceFile) {
 					}
 
 					return identifier + " (" + condition + ") {\n" + (statements as string[]).join("\n") + "\n}\n";
-				})();
+				})(currentNode.getFullText());
 
 				// SourceFile replacement logic
 
 				const [parentNode] = node.getParent().getChildren();
 				const startIndex = parentNode.getChildren().indexOf(node);
-				const endIndex = parentNode.getChildren().indexOf(currentNode) + 1;
+				const endIndex = parentNode.getChildren().indexOf(currentNode);
 
 				const newNodeText = [];
 
 				for (const node of parentNode.getChildren().slice(0, startIndex)) {
-					newNodeText.push(node.getText());
+					newNodeText.push(node.getFullText());
 				}
 
 				newNodeText.push(block);
 
 				for (const node of parentNode.getChildren().slice(endIndex)) {
-					newNodeText.push(node.getText());
+					newNodeText.push(node.getFullText());
 				}
 
+				console.log(newNodeText);
 				parentNode.replaceWithText(newNodeText.join("\n"));
+
+				recurse(parentNode.getChildren()[startIndex + 1]);
 
 				break;
 			case SyntaxKind.SwitchStatement:

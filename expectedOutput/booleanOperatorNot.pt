@@ -12,6 +12,6 @@ if (isTrue != true && 2 + 2 != 5) {
     console.log();
 }
 
-if (2 + 2 != 5 && 3 + 2 != 5) {
+if (2 + 2 != 5 || 3 + 2 != 5) {
     console.log();
 }

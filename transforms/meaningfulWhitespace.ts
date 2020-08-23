@@ -46,7 +46,8 @@ export default function visitNode(node) {
 							continue;
 						}
 
-						console.log(lines[x]);
+						// Debug
+						//console.log(lines[x]);
 
 						// FRAGILE
 						if (lines[x].endsWith(" and") || lines[x].endsWith(" or")) {
@@ -55,17 +56,15 @@ export default function visitNode(node) {
 									continue;
 								}
 
-								if (y === lines.length - 1) {
+								if (y === lines.length) {
 									nextSibling = nextSibling?.getNextSibling();
-
-									currentNode = currentNode.getNextSibling();
 
 									y = 0;
 
 									nextLines = nextSibling.getFullText().split(/\r?\n/g);
 								}
 
-								lines = [lines[x], nextLines.slice(1).join("\n")].join("").split("\n");
+								lines = [lines[x], nextLines.slice(y).join("\n")].join("").split("\n");
 
 								x = 0;
 							}

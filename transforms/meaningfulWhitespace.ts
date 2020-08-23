@@ -7,7 +7,6 @@ function getIndentationWidth(text) {
 }
 
 export default function recurse(node) {
-	//sourceFile.forEachChild(function recurse(node) {
 	switch (node.getKind()) {
 		case SyntaxKind.DoStatement:
 			throw new Error("Not yet implemented.");
@@ -57,7 +56,7 @@ export default function recurse(node) {
 					}
 				}
 
-				return identifier + " (" + condition + ") {\n" + compile((statements as string[]).join("\n")) + "}\n";
+				return identifier + " (" + condition + ") {\n" + compile(statements.join("\n")) + "}\n";
 			})(currentNode.getFullText());
 
 			// SourceFile replacement logic
@@ -78,12 +77,9 @@ export default function recurse(node) {
 				newNodeText.push(node.getFullText());
 			}
 
-			console.log(newNodeText);
 			parentNode.replaceWithText(newNodeText.join("\n"));
 
-			if (parentNode.getChildren()[startIndex + 1] !== undefined) {
-				recurse(parentNode.getChildren()[startIndex + 1]);
-			}
+			node = parentNode.getChildren()[startIndex];
 
 			break;
 		case SyntaxKind.SwitchStatement:
@@ -96,6 +92,7 @@ export default function recurse(node) {
 	}
 
 	let hasNextSibling;
+
 	try {
 		hasNextSibling = node.getNextSibling();
 	} catch (error) {
@@ -105,5 +102,4 @@ export default function recurse(node) {
 	if (hasNextSibling) {
 		recurse(node.getNextSibling());
 	}
-	//});
 }

@@ -1,3 +1,5 @@
+/* eslint-disable max-depth */
+
 import { SyntaxKind } from "../lib/typescript/SyntaxKind";
 
 import { compile } from "../compiler";
@@ -6,7 +8,7 @@ function getIndentationWidth(text) {
 	return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
 
-export default function recurse(node) {
+export default function visitNode(node) {
 	switch (node.getKind()) {
 		case SyntaxKind.DoStatement:
 			throw new Error("Not yet implemented.");
@@ -19,11 +21,12 @@ export default function recurse(node) {
 		case SyntaxKind.WhileStatement:
 			let currentNode = node;
 
-			const block = (function(nodeText) {
+			const block = (function parseBlock(nodeText) {
 				currentNode = currentNode.getNextSibling();
 
+				// FRAGILE
 				if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
-					for (; !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
+					for (; currentNode !== undefined && !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
 						nodeText += " " + currentNode.getFullText().trim();
 					}
 
@@ -32,22 +35,48 @@ export default function recurse(node) {
 
 				const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
 
-				const statements = [rest];
-
 				const blockIndentationWidth = getIndentationWidth(rest);
 
-				for (let nextSibling = currentNode; nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling()) {
-					for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
-						if (line === "") {
+				const statements = [];
+
+				// FRAGILE
+				for (let nextSibling = currentNode, lines = [...rest.split(/\r?\n/g).slice(1), ...nextSibling.getFullText().split(/\r?\n/g)]; nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), lines = nextSibling?.getFullText().split(/\r?\n/g)) {
+					for (let x = 0; x < lines.length; x++) {
+						if (lines[x] === "") {
 							continue;
 						}
 
-						const currentIndentationWidth = getIndentationWidth(line);
+						console.log(lines[x]);
 
-						if (currentIndentationWidth === blockIndentationWidth) {
+						// FRAGILE
+						if (lines[x].endsWith(" and") || lines[x].endsWith(" or")) {
+							for (let y = x + 1, nextLines = lines; !lines[x].endsWith(":"); y++) {
+								if (lines[y] === "") {
+									continue;
+								}
+
+								if (y === lines.length - 1) {
+									nextSibling = nextSibling?.getNextSibling();
+
+									currentNode = currentNode.getNextSibling();
+
+									y = 0;
+
+									nextLines = nextSibling.getFullText().split(/\r?\n/g);
+								}
+
+								lines = [lines[x], nextLines.slice(1).join("\n")].join("").split("\n");
+
+								x = 0;
+							}
+						}
+
+						const currentIndentationWidth = getIndentationWidth(lines[x]);
+
+						if (currentIndentationWidth >= blockIndentationWidth) {
 							currentNode = nextSibling;
 
-							statements.push(line);
+							statements.push(lines[x]);
 						} else {
 							nextSibling = undefined;
 
@@ -77,6 +106,9 @@ export default function recurse(node) {
 				newNodeText.push(node.getFullText());
 			}
 
+			// Debug
+			//console.log(newNodeText);
+
 			parentNode.replaceWithText(newNodeText.join("\n"));
 
 			node = parentNode.getChildren()[startIndex];
@@ -100,6 +132,6 @@ export default function recurse(node) {
 	}
 
 	if (hasNextSibling) {
-		recurse(node.getNextSibling());
+		visitNode(node.getNextSibling());
 	}
 }

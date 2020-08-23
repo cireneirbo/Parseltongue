@@ -16,8 +16,6 @@ export default function(sourceFile) {
 		singleLine = singleLine.replace(/ True /g, " true ");
 		singleLine = singleLine.replace(/ False /g, " false ");
 
-
-
 		if (singleLine === "") {
 			try {
 				if (newLines[i - 1].split("    ")[0] === "") {
@@ -34,16 +32,6 @@ export default function(sourceFile) {
 	}
 
 	let newLinesStr = newLines.join("\n");
-
-
-	// newText = newText.replace()
-	// if (newText.slice(-1) === "\n") {
-	// 	newText += "}";
-	// } else if (newText.slice(-1) === "") {
-	// 	newText += "\n}";
-	// } else {
-	// 	newText += "\n}";
-	// }
 
 	sourceFile.replaceWithText(newLinesStr);
 }

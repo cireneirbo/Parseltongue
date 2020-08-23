@@ -23125,38 +23125,60 @@ const SyntaxKind = {
     "LastContextualKeyword": 152
 };
 
+/* eslint-disable max-depth */
+//import { compile } from "../compiler";
 function getIndentationWidth(text) {
     return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
-function transform (sourceFile) {
-    sourceFile.forEachDescendant(function (node) {
-        switch (node.getKind()) {
-            case SyntaxKind.DoStatement:
-            case SyntaxKind.ForInStatement:
-            case SyntaxKind.ForOfStatement:
-            case SyntaxKind.ForStatement:
-            case SyntaxKind.IfStatement:
-            case SyntaxKind.WhileStatement:
-                const statements = [];
-                let currentNode = node;
-                let nodeText = currentNode.getText();
+function visitNode(node) {
+    switch (node.getKind()) {
+        case SyntaxKind.DoStatement:
+            throw new Error("Not yet implemented.");
+        case SyntaxKind.ForInStatement:
+        case SyntaxKind.ForOfStatement:
+        case SyntaxKind.ForStatement:
+        case SyntaxKind.IfStatement:
+        case SyntaxKind.WhileStatement:
+            let currentNode = node;
+            const block = (function parseBlock(nodeText) {
+                currentNode = currentNode.getNextSibling();
+                // FRAGILE
                 if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
-                    for (currentNode = currentNode.getNextSibling(); currentNode.getPreviousSibling().getKind() !== SyntaxKind.ColonToken; currentNode = currentNode.getNextSibling()) {
-                        nodeText += currentNode.getFullText();
+                    for (; currentNode !== undefined && !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
+                        nodeText += " " + currentNode.getFullText().trim();
                     }
-                    nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ") + currentNode.getNextSibling().getFullText();
+                    nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ");
                 }
-                const [identifier, condition, firstStatement] = /([a-z]+) (.*):(.*)/s.exec(nodeText).slice(1);
-                statements.push(" ".repeat(4) + firstStatement.trim());
-                const indentationWidth = getIndentationWidth(firstStatement);
-                for (let nextSibling = currentNode.getNextSibling(); nextSibling !== undefined; nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling()) {
-                    currentNode = nextSibling;
-                    for (const line of nextSibling.getFullText().split(/\r?\n/g)) {
-                        if (line === "") {
+                const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
+                const blockIndentationWidth = getIndentationWidth(rest);
+                const statements = [];
+                // FRAGILE
+                for (let nextSibling = currentNode, lines = [...rest.split(/\r?\n/g).slice(1), ...nextSibling.getFullText().split(/\r?\n/g)]; nextSibling !== undefined; nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling(), lines = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getFullText().split(/\r?\n/g)) {
+                    for (let x = 0; x < lines.length; x++) {
+                        if (lines[x] === "") {
                             continue;
                         }
-                        if (getIndentationWidth(line) === indentationWidth) {
-                            statements.push(" ".repeat(4) + nextSibling.getText().trim());
+                        // Debug
+                        //console.log(lines[x]);
+                        // FRAGILE
+                        if (lines[x].endsWith(" and") || lines[x].endsWith(" or")) {
+                            for (let y = x + 1, nextLines = lines; !lines[x].endsWith(":"); y++) {
+                                if (lines[y] === "") {
+                                    continue;
+                                }
+                                if (y === lines.length) {
+                                    nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling();
+                                    y = 0;
+                                    nextLines = nextSibling.getFullText().split(/\r?\n/g);
+                                }
+                                lines = [lines[x], nextLines.slice(y).join("\n")].join("").split("\n");
+                                x = 0;
+                            }
+                        }
+                        const currentIndentationWidth = getIndentationWidth(lines[x]);
+                        if (currentIndentationWidth >= blockIndentationWidth) {
+                            currentNode = nextSibling;
+                            statements.push(lines[x]);
                         }
                         else {
                             nextSibling = undefined;
@@ -23164,44 +23186,59 @@ function transform (sourceFile) {
                         }
                     }
                 }
-                let [parentNode] = node.getParent().getChildren();
-                const startIndex = parentNode.getChildren().indexOf(node);
-                const endIndex = parentNode.getChildren().indexOf(currentNode) + 1;
-                const newNodeText = [];
-                for (const node of parentNode.getChildren().slice(0, startIndex)) {
-                    newNodeText.push(node.getText());
-                }
-                newNodeText.push(identifier + " (" + condition + ") {\n" + statements.join("\n") + "\n}\n");
-                for (const node of parentNode.getChildren().slice(endIndex)) {
-                    newNodeText.push(node.getText());
-                }
-                parentNode.replaceWithText(newNodeText.join("\n"));
-                break;
-            case SyntaxKind.SwitchStatement:
-                const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);
-        }
-    });
+                return identifier + " (" + condition + ") {\n" + globalThis.compile(statements.join("\n")) + "}\n";
+            })(currentNode.getFullText());
+            // SourceFile replacement logic
+            const [parentNode] = node.getParent().getChildren();
+            const startIndex = parentNode.getChildren().indexOf(node);
+            const endIndex = parentNode.getChildren().indexOf(currentNode) + 1;
+            const newNodeText = [];
+            for (const node of parentNode.getChildren().slice(0, startIndex)) {
+                newNodeText.push(node.getFullText());
+            }
+            newNodeText.push(block);
+            for (const node of parentNode.getChildren().slice(endIndex)) {
+                newNodeText.push(node.getFullText());
+            }
+            // Debug
+            //console.log(newNodeText);
+            parentNode.replaceWithText(newNodeText.join("\n"));
+            node = parentNode.getChildren()[startIndex];
+            break;
+        case SyntaxKind.SwitchStatement:
+            const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);
+            throw new Error("Not yet implemented.");
+    }
+    let hasNextSibling;
+    try {
+        hasNextSibling = node.getNextSibling();
+    }
+    catch (error) {
+        hasNextSibling = false;
+    }
+    if (hasNextSibling) {
+        visitNode(node.getNextSibling());
+    }
 }
 
-const project = new Project({
-    "compilerOptions": {
-        "allowJs": true,
-        "allowSyntheticDefaultImports": true,
-        "alwaysStrict": true,
-        "esModuleInterop": true,
-        "experimentalDecorators": true,
-        "moduleResolution": "Node",
-        "target": "ES2015",
-        "preserveConstEnums": true
-    }
-});
 globalThis.compile = function (input) {
     // Normalize whitespace
     input = input.replace(/^\t+/gm, function (match) {
         return " ".repeat(match.length * 4);
     }).replace(/[ \t]+$/gm, "");
+    const project = new Project({
+        "compilerOptions": {
+            "allowJs": true,
+            "allowSyntheticDefaultImports": true,
+            "alwaysStrict": false,
+            "esModuleInterop": true,
+            "experimentalDecorators": true,
+            "moduleResolution": "Node",
+            "target": "ES2015"
+        }
+    });
     const sourceFile = project.createSourceFile("input.ts", input, { "overwrite": true });
-    transform(sourceFile);
+    visitNode(sourceFile.getChildren()[0].getChildren()[0]);
     const output = project.emitToMemory().getFiles()[0].text;
     project.removeSourceFile(sourceFile);
     return output;

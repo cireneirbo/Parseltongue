@@ -11,9 +11,11 @@ while (true) {
 if (true) {
     if (a > 5) {
         console.log();
-    } else if (a < 5) {
+    }
+    else if (a < 5) {
         console.log();
-    } else {
+    }
+    else {
         console.log();
     }
 }

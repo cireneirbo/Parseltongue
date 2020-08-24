@@ -120,7 +120,7 @@
 			if (location.hash.startsWith("#code/")) {
 				leftEditor.setValue(LZString.decompressFromEncodedURIComponent(location.hash.substring("#code/".length)))
 			} else {
-				fetch("https://raw.githubusercontent.com/cireneirbo/Parseltongue/master/input/forOfStatement.pt").then(function(response) {
+				fetch("https://raw.githubusercontent.com/cireneirbo/Parseltongue/master/input/index.pt").then(function(response) {
 					response.text().then(function(data) {
 						leftEditor.setValue(data);
 					});

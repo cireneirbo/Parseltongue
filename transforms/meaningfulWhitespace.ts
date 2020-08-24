@@ -17,6 +17,7 @@ export default function visitNode(node) {
 		case SyntaxKind.ForInStatement:
 		case SyntaxKind.ForOfStatement:
 		case SyntaxKind.ForStatement:
+		case SyntaxKind.FunctionDeclaration:
 		case SyntaxKind.IfStatement:
 		case SyntaxKind.WhileStatement:
 			let currentNode = node;
@@ -30,10 +31,18 @@ export default function visitNode(node) {
 						nodeText += " " + currentNode.getFullText().trim();
 					}
 
-					nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ");
+					nodeText = nodeText.replace(/\b and \b/g, " && ").replace(/\b or \b/g, " || ");
 				}
 
-				const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
+				let identifier;
+				let condition;
+				let rest;
+
+				if (/^\s*function/.test(nodeText)) {
+					[identifier, condition, rest] = /(function.*?)\((.*?)\):(.*)/s.exec(nodeText).slice(1);
+				} else {
+					[identifier, condition, rest] = /(for|if|while) (.*?):(.*)/s.exec(nodeText).slice(1);
+				}
 
 				const blockIndentationWidth = getIndentationWidth(rest);
 
@@ -84,7 +93,7 @@ export default function visitNode(node) {
 					}
 				}
 
-				return identifier + " (" + condition + ") {\n" + compile(statements.join("\n")) + "}\n";
+				return identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {\n" + compile(statements.join("\n")) + "}\n";
 			})(currentNode.getFullText());
 
 			// SourceFile replacement logic

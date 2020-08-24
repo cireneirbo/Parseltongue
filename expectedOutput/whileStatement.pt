@@ -3,7 +3,7 @@ while (condition) {
     console.log();
 }
 
-while (condition && condition) {
+while (condition || condition) {
     console.log();
     console.log();
 }

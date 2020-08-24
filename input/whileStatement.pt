@@ -2,6 +2,6 @@ while condition:
     console.log()
     console.log()
 
-while condition and condition:
+while condition or condition:
     console.log()
     console.log()

@@ -3,7 +3,7 @@ if (condition) {
     console.log();
 }
 
-if (condition && condition) {
+if (condition || condition) {
     console.log();
     console.log();
 }

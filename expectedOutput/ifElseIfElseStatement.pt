@@ -1,0 +1,12 @@
+if (conditon) {
+    console.log();
+    console.log();
+}
+else if (conditon) {
+    console.log();
+    console.log();
+}
+else {
+    console.log();
+    console.log();
+}

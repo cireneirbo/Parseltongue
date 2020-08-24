@@ -2,7 +2,7 @@
 
 import { SyntaxKind } from "../lib/typescript/SyntaxKind";
 
-import { compile } from "../compiler";
+//import { compile } from "../compiler";
 
 function getIndentationWidth(text) {
 	return (/^ {2,}/m.exec(text) || [""])[0].length;
@@ -56,7 +56,7 @@ export default function visitNode(node) {
 									continue;
 								}
 
-								if (y === lines.length) {
+								if (y >= lines.length) {
 									nextSibling = nextSibling?.getNextSibling();
 
 									y = 0;
@@ -84,7 +84,7 @@ export default function visitNode(node) {
 					}
 				}
 
-				return identifier + " (" + condition + ") {\n" + compile(statements.join("\n")) + "}\n";
+				return identifier + " (" + condition + ") {\n" + globalThis.compile(statements.join("\n")) + "}\n";
 			})(currentNode.getFullText());
 
 			// SourceFile replacement logic

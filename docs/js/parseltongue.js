@@ -23166,7 +23166,7 @@ function visitNode(node) {
                                 if (lines[y] === "") {
                                     continue;
                                 }
-                                if (y === lines.length) {
+                                if (y >= lines.length) {
                                     nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling();
                                     y = 0;
                                     nextLines = nextSibling.getFullText().split(/\r?\n/g);

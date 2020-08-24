@@ -1,0 +1,13 @@
+if (2 + 2 == 4) {
+    if (2 + 2 == 4) {
+        console.log();
+        console.log();
+    }
+}
+
+if (2 + 2 == 4 && 4 + 4 == 8) {
+    if (2 + 2 == 4 && 4 + 4 == 8) {
+        console.log();
+        console.log();
+    }
+}

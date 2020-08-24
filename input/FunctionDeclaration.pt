@@ -1,0 +1,11 @@
+function():
+    console.log()
+    console.log()
+
+function(param1, param2):
+    console.log()
+    console.log()
+
+function foo(param1, param2):
+    console.log()
+    console.log()

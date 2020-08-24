@@ -2,6 +2,6 @@ if condition:
     console.log()
     console.log()
 
-if condition or condition:
+if condition and condition:
     console.log()
     console.log()

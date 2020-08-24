@@ -129,13 +129,13 @@ test: npm run start
 </table>
 
 ### License
-      __ _
+<p>   __ _
      / /(_) ___ ___ _ __  ___  ___
     / / | |/ __/ _ \ '_ \/ __|/ _ \
    / /__| | (_|  __/ | | \__ \  __/
   /_____/_|\___\___|_| |_|___/\___|
                     \|  \|
-
+</p>
 `Parseltongue` is licensed under the [MIT License](https://github.com/cireneribo/Parseltongue/blob/master/LICENSE).
 
 All files located in the `node_modules` directory are externally maintained libraries used by this software which have their own licenses; it is recommend that you read them, as their terms may differ from the terms in the MIT License.

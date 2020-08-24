@@ -1504,6 +1504,49 @@
 
 		}
 
+		#footer a:hover {
+			color: #e59dc4;
+		}
+
+		#footer > .creators strong {
+			font-weight: 900;
+		}
+
+	#footer > nav {
+		position: absolute;
+		top: 0;
+		right: 2rem;
+	}
+
+	@media screen and (max-width: 980px) {
+
+		#footer > nav {
+			display: none;
+		}
+
+		#footer > .navPanelToggle {
+			display: block;
+		}
+
+	}
+
+	@media screen and (max-width: 736px) {
+
+		#footer {
+			height: 44px;
+			line-height: 44px;
+		}
+
+			#footer > .logo {
+				left: 1rem;
+			}
+
+			#footer > .navPanelToggle {
+				padding: 0 1rem;
+			}
+
+	}
+
 /* Wrapper */
 
 	#wrapper {

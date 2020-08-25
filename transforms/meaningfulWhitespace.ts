@@ -40,6 +40,10 @@ export default function visitNode(node) {
 
 				if (/^\s*function/.test(nodeText)) {
 					[identifier, condition, rest] = /(function.*?)\((.*?)\):(.*)/s.exec(nodeText).slice(1);
+
+					rest += currentNode.getFullText().trim();
+
+					currentNode = currentNode.getNextSibling();
 				} else {
 					[identifier, condition, rest] = /(for|if|while) (.*?):(.*)/s.exec(nodeText).slice(1);
 				}

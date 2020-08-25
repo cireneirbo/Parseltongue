@@ -38,20 +38,8 @@
 </table>
 
 ### Getting Started
-     ___     _   _   _               __ _             _           _
-    / _ \___| |_| |_(_)_ __   __ _  / _\ |_ __ _ _ __| |_ ___  __| |
-   / /_\/ _ \ __| __| | '_ \ / _` | \ \| __/ _` | '__| __/ _ \/ _` |
-  / /_\\  __/ |_| |_| | | | | (_| | _\ \ || (_| | |  | ||  __/ (_| |
-  \____/\___|\__|\__|_|_| |_|\__, | \__/\__\__,_|_|   \__\___|\__,_|
-                     \|      |___/               \|
 
 #### Prerequisites
-     ___                               _     _ _
-    / _ \_ __ ___ _ __ ___  __ _ _   _(_)___(_) |_ ___  ___
-   / /_)/ '__/ _ \ '__/ _ \/ _` | | | | / __| | __/ _ \/ __|
-  / ___/| | |  __/ | |  __/ (_| | |_| | \__ \ | ||  __/\__ \
-  \/    |_|  \___|_|  \___|\__, |\__,_|_|___/_|\__\___||___/
-                  \|            |_|      \|
 
 Project is created with:
 * [Node.js](https://nodejs.org/en/download/)
@@ -60,12 +48,6 @@ Project is created with:
 * typescript: latest
 
 #### Installation
-    _____           _        _ _       _   _
-    \_   \_ __  ___| |_ __ _| | | __ _| |_(_) ___  _ __
-     / /\/ '_ \/ __| __/ _` | | |/ _` | __| |/ _ \| '_ \
-   _/ /_ | | | \__ \ || (_| | | | (_| | |_| | (_) | | | |
-  |____/ |_| |_|___/\__\__,_|_|_|\__,_|\__|_|\___/|_| |_|
-                             \|\|
 
 To run this project, install it locally using npm:
 
@@ -75,24 +57,12 @@ $ npm start
 
 #### Usage
 
-   /\ /\  ___  __ _  __ _  ___
-  / / \ \/ __|/ _` |/ _` |/ _ \
-  \ \_/ /\__ \ (_| | (_| |  __/
-   \___/ |___/\__,_|\__, |\___|
-                 |/ |___/
-
 build: rollup --config --watch
 serve: npx npx http-server docs/ -c-1 -o
 start: ts-node index.ts
 test: npm run start
 
 ### Acknowledgements
-     _        _                        _          _                                 _
-    /_\   ___| | ___ __   _____      _| | ___  __| | __ _  ___ _ __ ___   ___ _ __ | |_ ___
-   //_\\ / __| |/ / '_ \ / _ \ \ /\ / / |/ _ \/ _` |/ _` |/ _ \ '_ ` _ \ / _ \ '_ \| __/ __|
-  /  _  \ (__|   <| | | | (_) \ V  V /| |  __/ (_| | (_| |  __/ | | | | |  __/ | | | |_\__ \
-  \_/ \_/\___|_|\_\_| |_|\___/ \_/\_/ |_|\___|\__,_|\__, |\___|_| |_| |_|\___|_| |_|\__|___/
-              \|                       \|         \||___/
 
 <table>
     <thead>
@@ -129,13 +99,7 @@ test: npm run start
 </table>
 
 ### License
-<p>   __ _
-     / /(_) ___ ___ _ __  ___  ___
-    / / | |/ __/ _ \ '_ \/ __|/ _ \
-   / /__| | (_|  __/ | | \__ \  __/
-  /_____/_|\___\___|_| |_|___/\___|
-                    \|  \|
-</p>
+
 `Parseltongue` is licensed under the [MIT License](https://github.com/cireneribo/Parseltongue/blob/master/LICENSE).
 
 All files located in the `node_modules` directory are externally maintained libraries used by this software which have their own licenses; it is recommend that you read them, as their terms may differ from the terms in the MIT License.

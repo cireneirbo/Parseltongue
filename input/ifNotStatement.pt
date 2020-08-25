@@ -1,0 +1,7 @@
+if not condition:
+    console.log()
+    console.log()
+
+if not condition and not condition:
+    console.log()
+    console.log()

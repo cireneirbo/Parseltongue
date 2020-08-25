@@ -26,7 +26,7 @@ export default function visitNode(node) {
 				currentNode = currentNode.getNextSibling();
 
 				// FRAGILE
-				if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
+				if (nodeText.endsWith(" and") || nodeText.endsWith(" or") || /^\s*if not /.test(nodeText)) {
 					for (; currentNode !== undefined && !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
 						nodeText += " " + currentNode.getFullText().trim();
 					}
@@ -45,7 +45,7 @@ export default function visitNode(node) {
 
 					currentNode = currentNode.getNextSibling();
 				} else {
-					[identifier, condition, rest] = /(for|if|while) (.*?):(.*)/s.exec(nodeText).slice(1);
+					[identifier, condition, rest] = /^\s*(for|if|while) (.*?):(.*)/s.exec(nodeText).slice(1);
 				}
 
 				const blockIndentationWidth = getIndentationWidth(rest);

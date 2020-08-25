@@ -31,9 +31,11 @@
 ### Getting Started
 
 Check out the required npm packages.
-https://www.npmjs.com/package/typescript
-https://www.npmjs.com/package/ts-node
-https://www.npmjs.com/package/ts-morph
+* https://www.npmjs.com/package/typescript
+
+* https://www.npmjs.com/package/ts-node
+
+* https://www.npmjs.com/package/ts-morph
 
 #### Prerequisites
 

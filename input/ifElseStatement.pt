@@ -1,4 +1,4 @@
-if conditon:
+if condition:
     console.log()
     console.log()
 else:

@@ -18,10 +18,10 @@ console.log(houses[Math.floor(houses.length * Math.random())])
 
 const parselMouths = ["Delphini", "Corvinus Gaunt", "Gormlaith Gaunt", "Marvolo Gaunt", "Morfin Gaunt", "Herpo the Foul", "Nagini", "Harry Potter", "Merope Riddle", "Tom Riddle", "Salazar Slytherin"]
 
-function canSpeakParseltongue(name) {
+function canSpeakParseltongue(name):
     if parselMouths.includes(name):
         return name + " can speak Parseltongue."
     else:
         return name + " cannot speak Parseltongue."
-}
+
 console.log(canSpeakParseltongue("Harry Potter"))

@@ -1,7 +1,7 @@
-if conditon:
+if condition:
     console.log()
     console.log()
-else if condtion:
+else if condition:
     console.log()
     console.log()
 else:

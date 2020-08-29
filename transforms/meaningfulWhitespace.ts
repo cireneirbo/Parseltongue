@@ -93,21 +93,7 @@ export default function visitNode(node) {
 
 						const currentIndentationWidth = getIndentationWidth(lines[x]);
 
-						if (lines[x].startsWith("else")) {
-							currentNode = nextSibling;
-
-							if (nextSibling.getNextSibling().getKind() === SyntaxKind.ColonToken) {
-								nextSibling = nextSibling.getNextSibling();
-							}
-
-							getKeyOfObjectByPath(statements, path).push([]);
-
-							path.push(getKeyOfObjectByPath(statements, path).length - 1);
-						} else if (lines[x].startsWith(" if")) {
-							currentNode = nextSibling;
-
-							getKeyOfObjectByPath(statements, path).push(lines[x].trim());
-						} else if (currentIndentationWidth >= blockIndentationWidth) {
+						if (currentIndentationWidth >= blockIndentationWidth) {
 							currentNode = nextSibling;
 
 							getKeyOfObjectByPath(statements, path).push(lines[x]);
@@ -119,21 +105,7 @@ export default function visitNode(node) {
 					}
 				}
 
-				const blocks = (function recurse(statements) {
-					const blocks = [];
-
-					for (const statement of statements) {
-						if (Array.isArray(statement)) {
-							blocks.push("}\nelse {", compile(recurse(statement) + "\n}"));
-						} else {
-							blocks.push(statement);
-						}
-					}
-
-					return blocks.join("\n");
-				})(statements);
-
-				return [identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {", blocks, "}"].join("\n");
+				return [identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {", compile(statements.join("\n")), "}"].join("\n");
 			})(currentNode.getFullText());
 
 			// SourceFile replacement logic

@@ -135,6 +135,7 @@ export default function visitNode(node) {
 					return blocks.join("\n");
 				})(statements);
 
+				// GROSS HACK
 				return [identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {", compile(blocks).replace(/\/\* else \*\//g, "}\nelse {\n"), "}"].join("\n");
 			})(currentNode.getFullText());
 

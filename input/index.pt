@@ -1,22 +1,92 @@
 //
-// helloWorld.pt
+// wizardry
 //
 
 console.log("Mischief managed.")
-
-//
-// sortingHat.pt
-//
 
 const houses = ["Slytherin", "Gryffindor", "Hufflepuff", "Ravenclaw"]
 
 console.log(houses[Math.floor(houses.length * Math.random())])
 
 //
-// parseltongue.pt
+// `while` loops
 //
 
-function toParseltongue(input):
-    return input.replace(/(s)/gi, match => match.repeat(5))
+while condition:
+    console.log()
+    console.log()
 
-console.log(toParseltongue("Serendipitous"))
+while condition or condition:
+    console.log()
+    console.log()
+
+//
+// `for` loops
+//
+
+for const element in {}:
+    console.log()
+    console.log()
+
+for const element of []:
+    console.log()
+    console.log()
+
+for let x = 0; x < 10; x++:
+    console.log()
+    console.log()
+
+//
+// functions
+//
+
+function foo(param1, param2):
+    console.log()
+    console.log()
+
+function(param1, param2):
+    console.log()
+    console.log()
+
+function():
+    console.log()
+    console.log()
+
+//
+// if..else
+//
+
+if condition:
+    console.log()
+    console.log()
+else:
+    console.log()
+    console.log()
+
+//
+// nested `if`s
+//
+
+if condition:
+    if condition:
+        console.log()
+        console.log()
+
+if 2 + 2 == 4:
+    if 2 + 2 == 4:
+        console.log()
+        console.log()
+
+if 2 + 2 == 4 or 4 + 4 == 8:
+    if 2 + 2 == 4 or 4 + 4 == 8:
+        console.log()
+        console.log()
+
+//
+// `and`, `or`, `not`
+//
+
+if condition and condition:
+    if condition or not condition:
+        console.log()
+        console.log()

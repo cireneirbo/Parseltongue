@@ -23130,6 +23130,11 @@ const SyntaxKind = {
 function getIndentationWidth(text) {
     return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
+function getKeyOfObjectByPath(object, path) {
+    return path.reduce(function (object, key) {
+        return object[key];
+    }, object) || object;
+}
 function visitNode(node) {
     switch (node.getKind()) {
         case SyntaxKind.DoStatement:
@@ -23164,6 +23169,7 @@ function visitNode(node) {
                 const blockIndentationWidth = getIndentationWidth(rest);
                 const statements = [];
                 // FRAGILE
+                const path = [];
                 for (let nextSibling = currentNode, lines = [...rest.split(/\r?\n/g).slice(1), ...nextSibling.getFullText().split(/\r?\n/g)]; nextSibling !== undefined; nextSibling = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getNextSibling(), lines = nextSibling === null || nextSibling === void 0 ? void 0 : nextSibling.getFullText().split(/\r?\n/g)) {
                     for (let x = 0; x < lines.length; x++) {
                         if (lines[x] === "") {
@@ -23189,16 +23195,19 @@ function visitNode(node) {
                         const currentIndentationWidth = getIndentationWidth(lines[x]);
                         if (lines[x].startsWith("else")) {
                             currentNode = nextSibling;
-                            if (currentNode.getKind() === SyntaxKind.IfStatement) {
-                                statements.push("} else");
+                            if (nextSibling.getNextSibling().getKind() === SyntaxKind.ColonToken) {
+                                nextSibling = nextSibling.getNextSibling();
                             }
-                            else {
-                                statements.push("} else" + currentNode.getFullText());
-                            }
+                            getKeyOfObjectByPath(statements, path).push([]);
+                            path.push(getKeyOfObjectByPath(statements, path).length - 1);
+                        }
+                        else if (lines[x].startsWith(" if")) {
+                            currentNode = nextSibling;
+                            getKeyOfObjectByPath(statements, path).push(lines[x].trim());
                         }
                         else if (currentIndentationWidth >= blockIndentationWidth) {
                             currentNode = nextSibling;
-                            statements.push(lines[x]);
+                            getKeyOfObjectByPath(statements, path).push(lines[x]);
                         }
                         else {
                             nextSibling = undefined;
@@ -23206,7 +23215,21 @@ function visitNode(node) {
                         }
                     }
                 }
-                return identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {\n" + globalThis.compile(statements.join("\n")) + "}\n";
+                const blocks = (function recurse(statements) {
+                    const blocks = [];
+                    for (const statement of statements) {
+                        if (Array.isArray(statement)) {
+                            blocks.push("/* else */");
+                            blocks.push(globalThis.compile(recurse(statement)));
+                        }
+                        else {
+                            blocks.push(statement);
+                        }
+                    }
+                    return blocks.join("\n");
+                })(statements);
+                // GROSS HACK
+                return [identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {", globalThis.compile(blocks).replace(/\/\* else \*\//g, "}\nelse {\n"), "}"].join("\n");
             })(currentNode.getFullText());
             // SourceFile replacement logic
             const [parentNode] = node.getParent().getChildren();
@@ -23229,14 +23252,7 @@ function visitNode(node) {
             const [caseBlock] = node.getChildrenOfKind(SyntaxKind.CaseBlock);
             throw new Error("Not yet implemented.");
     }
-    let hasNextSibling;
-    try {
-        hasNextSibling = node.getNextSibling();
-    }
-    catch (error) {
-        hasNextSibling = false;
-    }
-    if (hasNextSibling) {
+    if (node.getNextSibling()) {
         visitNode(node.getNextSibling());
     }
 }

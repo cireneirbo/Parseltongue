@@ -4,26 +4,26 @@
 // /_/     \__,_|_|  |___/\___|_|\__\___/|_| |_|\__, |\__,_|\___|
 //                            \| \|             |___/
 
+//
 // helloWorld.pt
+//
 
-console.log("Mischief managed.");
+console.log("Mischief, managed.");
 
+//
 // sortingHat.pt
+//
 
 const houses = ["Slytherin", "Gryffindor", "Hufflepuff", "Ravenclaw"];
 
 console.log(houses[Math.floor(houses.length * Math.random())]);
 
-// parselMouths.pt
+//
+// parseltongue.pt
+//
 
-const parselMouths = ["Delphini", "Corvinus Gaunt", "Gormlaith Gaunt", "Marvolo Gaunt", "Morfin Gaunt", "Herpo the Foul", "Nagini", "Harry Potter", "Merope Riddle", "Tom Riddle", "Salazar Slytherin"];
-
-function canSpeakParseltongue(name) {
-    if (parselMouths.includes(name)) {
-        return name + " can speak Parseltongue.";
-    } else {
-        return name + " cannot speak Parseltongue.";
-    }
+function toParseltongue(input) {
+    return input.replace(/(s)/gi, match => match.repeat(5))
 }
 
-console.log(canSpeakParseltongue("Harry Potter"));
+console.log(toParseltongue("Serendipitous"));

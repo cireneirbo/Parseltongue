@@ -1,9 +1,0 @@
-if condition:
-    console.log()
-    console.log()
-else if condition:
-    console.log()
-    console.log()
-else:
-    console.log()
-    console.log()

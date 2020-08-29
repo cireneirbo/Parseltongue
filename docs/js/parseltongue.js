@@ -23137,19 +23137,30 @@ function visitNode(node) {
         case SyntaxKind.ForInStatement:
         case SyntaxKind.ForOfStatement:
         case SyntaxKind.ForStatement:
+        case SyntaxKind.FunctionDeclaration:
         case SyntaxKind.IfStatement:
         case SyntaxKind.WhileStatement:
             let currentNode = node;
             const block = (function parseBlock(nodeText) {
                 currentNode = currentNode.getNextSibling();
                 // FRAGILE
-                if (nodeText.endsWith(" and") || nodeText.endsWith(" or")) {
+                if (nodeText.endsWith(" and") || nodeText.endsWith(" or") || /^\s*if not /.test(nodeText)) {
                     for (; currentNode !== undefined && !currentNode.getPreviousSibling().getFullText().includes(":"); currentNode = currentNode.getNextSibling()) {
                         nodeText += " " + currentNode.getFullText().trim();
                     }
-                    nodeText = nodeText.replace(/ and /g, " && ").replace(/ or /g, " || ");
+                    nodeText = nodeText.replace(/\b and \b/g, " && ").replace(/\b or \b/g, " || ");
                 }
-                const [identifier, condition, rest] = /([a-z]+) (.*?):(.*)/s.exec(nodeText).slice(1);
+                let identifier;
+                let condition;
+                let rest;
+                if (/^\s*function/.test(nodeText)) {
+                    [identifier, condition, rest] = /(function.*?)\((.*?)\):(.*)/s.exec(nodeText).slice(1);
+                    rest += currentNode.getFullText().trim();
+                    currentNode = currentNode.getNextSibling();
+                }
+                else {
+                    [identifier, condition, rest] = /^\s*(for|if|while) (.*?):(.*)/s.exec(nodeText).slice(1);
+                }
                 const blockIndentationWidth = getIndentationWidth(rest);
                 const statements = [];
                 // FRAGILE
@@ -23176,7 +23187,16 @@ function visitNode(node) {
                             }
                         }
                         const currentIndentationWidth = getIndentationWidth(lines[x]);
-                        if (currentIndentationWidth >= blockIndentationWidth) {
+                        if (lines[x].startsWith("else")) {
+                            currentNode = nextSibling;
+                            if (currentNode.getKind() === SyntaxKind.IfStatement) {
+                                statements.push("} else");
+                            }
+                            else {
+                                statements.push("} else" + currentNode.getFullText());
+                            }
+                        }
+                        else if (currentIndentationWidth >= blockIndentationWidth) {
                             currentNode = nextSibling;
                             statements.push(lines[x]);
                         }
@@ -23186,7 +23206,7 @@ function visitNode(node) {
                         }
                     }
                 }
-                return identifier + " (" + condition + ") {\n" + globalThis.compile(statements.join("\n")) + "}\n";
+                return identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {\n" + globalThis.compile(statements.join("\n")) + "}\n";
             })(currentNode.getFullText());
             // SourceFile replacement logic
             const [parentNode] = node.getParent().getChildren();

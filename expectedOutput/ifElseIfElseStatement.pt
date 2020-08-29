@@ -1,12 +1,14 @@
-if (conditon) {
-    console.log();
-    console.log();
-}
-else if (conditon) {
+if (condition) {
     console.log();
     console.log();
 }
 else {
-    console.log();
-    console.log();
+    if (condition) {
+        console.log();
+        console.log();
+    }
+    else {
+        console.log();
+        console.log();
+    }
 }

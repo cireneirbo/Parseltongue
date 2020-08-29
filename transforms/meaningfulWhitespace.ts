@@ -8,6 +8,12 @@ function getIndentationWidth(text) {
 	return (/^ {2,}/m.exec(text) || [""])[0].length;
 }
 
+function getKeyOfObjectByPath(object, path) {
+	return path.reduce(function(object, key) {
+		return object[key];
+	}, object) || object;
+}
+
 export default function visitNode(node) {
 	switch (node.getKind()) {
 		case SyntaxKind.DoStatement:
@@ -53,6 +59,8 @@ export default function visitNode(node) {
 				const statements = [];
 
 				// FRAGILE
+				const path = [];
+
 				for (let nextSibling = currentNode, lines = [...rest.split(/\r?\n/g).slice(1), ...nextSibling.getFullText().split(/\r?\n/g)]; nextSibling !== undefined; nextSibling = nextSibling?.getNextSibling(), lines = nextSibling?.getFullText().split(/\r?\n/g)) {
 					for (let x = 0; x < lines.length; x++) {
 						if (lines[x] === "") {
@@ -85,10 +93,24 @@ export default function visitNode(node) {
 
 						const currentIndentationWidth = getIndentationWidth(lines[x]);
 
-						if (currentIndentationWidth >= blockIndentationWidth) {
+						if (lines[x].startsWith("else")) {
 							currentNode = nextSibling;
 
-							statements.push(lines[x]);
+							if (nextSibling.getNextSibling().getKind() === SyntaxKind.ColonToken) {
+								nextSibling = nextSibling.getNextSibling();
+							}
+
+							getKeyOfObjectByPath(statements, path).push([]);
+
+							path.push(getKeyOfObjectByPath(statements, path).length - 1);
+						} else if (lines[x].startsWith(" if")) {
+							currentNode = nextSibling;
+
+							getKeyOfObjectByPath(statements, path).push(lines[x].trim());
+						} else if (currentIndentationWidth >= blockIndentationWidth) {
+							currentNode = nextSibling;
+
+							getKeyOfObjectByPath(statements, path).push(lines[x]);
 						} else {
 							nextSibling = undefined;
 
@@ -97,7 +119,21 @@ export default function visitNode(node) {
 					}
 				}
 
-				return identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {\n" + compile(statements.join("\n")) + "}\n";
+				const blocks = (function recurse(statements) {
+					const blocks = [];
+
+					for (const statement of statements) {
+						if (Array.isArray(statement)) {
+							blocks.push("}\nelse {", compile(recurse(statement) + "\n}"));
+						} else {
+							blocks.push(statement);
+						}
+					}
+
+					return blocks.join("\n");
+				})(statements);
+
+				return [identifier + " (" + condition.replace(/\bnot \b/g, "!") + ") {", blocks, "}"].join("\n");
 			})(currentNode.getFullText());
 
 			// SourceFile replacement logic
@@ -135,15 +171,7 @@ export default function visitNode(node) {
 		default:
 	}
 
-	let hasNextSibling;
-
-	try {
-		hasNextSibling = node.getNextSibling();
-	} catch (error) {
-		hasNextSibling = false;
-	}
-
-	if (hasNextSibling) {
+	if (node.getNextSibling()) {
 		visitNode(node.getNextSibling());
 	}
 }

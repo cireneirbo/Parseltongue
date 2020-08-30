@@ -53,8 +53,25 @@
 	<div id="wrapper">
 		<div class="row">
 			<div class="col-7">
+				<select id="fileSelector">
+					<option value="index.pt" selected>index.pt</option>
+					<option value="FunctionDeclaration.pt">FunctionDeclaration.pt</option>
+					<option value="forInStatement.pt">forInStatement.pt</option>
+					<option value="forOfStatement.pt">forOfStatement.pt</option>
+					<option value="forStatement.pt">forStatement.pt</option>
+					<option value="ifElseStatement.pt">ifElseStatement.pt</option>
+					<option value="ifNotStatement.pt">ifNotStatement.pt</option>
+					<option value="ifStatement.pt">ifStatement.pt</option>
+					<option value="ifStatementMath.pt">ifStatementMath.pt</option>
+					<option value="nestedIfStatement.pt">nestedIfStatement.pt</option>
+					<option value="nestedIfStatementMath.pt">nestedIfStatementMath.pt</option>
+					<option value="twoPlusTwo.pt">twoPlusTwo.pt</option>
+					<option value="whileStatement.pt">whileStatement.pt</option>
+				</select>
+
                 <div id="leftEditor"></div>
 			</div>
+
 			<div class="col-5" style="padding-left: 0">
                 <div id="rightEditor"></div>
 			</div>
@@ -154,6 +171,14 @@
 		});
 
 		document.addEventListener("DOMContentLoaded", function(event) {
+
+			document.getElementById("fileSelector").addEventListener("change", function(event) {
+				fetch("https://raw.githubusercontent.com/cireneirbo/Parseltongue/master/input/" + this.value).then(function(response) {
+					response.text().then(function(data) {
+						leftEditor.setValue(data);
+					});
+				});
+			})
 
 		});
 
